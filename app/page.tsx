@@ -5,6 +5,9 @@ import * as htmlToImage from "html-to-image";
 import jsPDF from "jspdf";
 import day1 from "@/src/data/day1.json";
 import day2 from "@/src/data/day2.json";
+import ExportPoster from "@/src/Components/ExportPoster";
+
+
 
 type Show = {
   day: 1 | 2;
@@ -27,6 +30,7 @@ type Selection = {
 };
 
 const STORAGE_KEY = "cosquin_schedule_v1";
+
 
 function showKey(s: Show) {
   return `${s.day}|${s.time}|${s.stage}|${s.artist}`;
@@ -98,6 +102,8 @@ function stageBadge(stage: string) {
 
 export default function Page() {
   
+
+
   const allShows: Show[] = useMemo(() => {
     // @ts-ignore
     return [...(day1 as Show[]), ...(day2 as Show[])];
@@ -111,6 +117,24 @@ export default function Page() {
 
   const [allSelection, setAllSelection] = useState<Record<string, Selection>>({});
   const selection: Selection = allSelection[String(day)] ?? {};
+
+const selectedShows = useMemo(() => {
+  const result: Show[] = [];
+
+  for (const slot of slots) {
+    const t = slot.time;
+    const keys = selection[t] ?? [];
+    if (keys.length === 0) continue;
+    if (keys.includes("FREE")) continue;
+
+    for (const s of slot.shows) {
+      if (keys.includes(showKey(s))) result.push(s);
+    }
+  }
+
+  return result;
+}, [slots, selection]);
+
 
   // load saved selections
   useEffect(() => {
@@ -161,40 +185,19 @@ export default function Page() {
 
   const posterRef = useRef<HTMLDivElement | null>(null);
 
-  async function downloadPNG() {
+async function downloadPNG() {
   if (!posterRef.current) return;
 
   const dataUrl = await htmlToImage.toPng(posterRef.current, {
-    width: 1080,
-    height: 1920,
-    backgroundColor: "#0b0b10",
-    pixelRatio: 1
+    cacheBust: true,
+    backgroundColor: "#0e7a4c", // si después usás bg PNG, lo cambiamos a transparente
+    pixelRatio: 1,
   });
 
   const link = document.createElement("a");
-  link.download = `mi-cosquin-dia-${day}.png`;
+  link.download = `cosquin-poster-dia-${day}.png`;
   link.href = dataUrl;
   link.click();
-}
-
-async function downloadPDF() {
-  if (!posterRef.current) return;
-
-  const dataUrl = await htmlToImage.toPng(posterRef.current, {
-    width: 1080,
-    height: 1920,
-    backgroundColor: "#0b0b10",
-    pixelRatio: 1
-  });
-
-  const pdf = new jsPDF({
-    orientation: "portrait",
-    unit: "px",
-    format: [1080, 1920]
-  });
-
-  pdf.addImage(dataUrl, "PNG", 0, 0, 1080, 1920);
-  pdf.save(`mi-cosquin-dia-${day}.pdf`);
 }
 
 
@@ -370,54 +373,16 @@ async function downloadPDF() {
          <div className="grid grid-cols-2 gap-2">
 
   {/* Poster oculto SOLO para export */}
+{/* Poster oculto SOLO para export (1080x1920) */}
 <div className="fixed left-[-9999px] top-0">
-  <div
-    ref={posterRef}
-    style={{ width: 1080, height: 1920 }}
-    className="bg-[#0b0b10] p-16 text-white"
-  >
-    {/* CONTENIDO DEL POSTER EXPORT */}
-    <div className="text-sm opacity-70">Mi Cosquín Rock 2026</div>
-    <div className="text-3xl font-bold">{formatDayLabel(day)}</div>
-    <div className="mb-6 text-sm opacity-70">{dayDate}</div>
-
-    <div className="space-y-4">
-      {times
-        .filter((t) => {
-          const sel = selection[t];
-          return sel && sel.length > 0;
-        })
-        .map((t) => {
-          const keys = selection[t];
-          const isFree = keys.includes("FREE");
-          const picked = dayShows.filter(
-            (s) => s.time === t && keys.includes(showKey(s))
-          );
-
-          return (
-            <div
-              key={t}
-              className="rounded-xl bg-white/10 p-4"
-            >
-              <div className="mb-2 text-lg font-semibold">{t}</div>
-
-              {isFree ? (
-                <div className="text-base opacity-80">Libre</div>
-              ) : (
-                picked.map((s) => (
-                  <div key={showKey(s)} className="text-base">
-                    <span className="opacity-70">{s.stage}</span> — {s.artist}
-                  </div>
-                ))
-              )}
-            </div>
-          );
-        })}
-    </div>
-
-    <div className="mt-8 text-xs opacity-60">
-      Horarios sujetos a cambios
-    </div>
+  <div ref={posterRef}>
+    <ExportPoster
+      dayLabel={formatDayLabel(day)}
+      dateLabel={day === 1 ? "14 FEB" : "15 FEB"}
+      venueLabel="AERÓDROMO SANTA MARÍA DE PUNILLA"
+      hashtag="#CR26"
+      selectedShows={selectedShows}
+    />
   </div>
 </div>
 
@@ -429,12 +394,6 @@ async function downloadPDF() {
     Descargar PNG (Stories)
   </button>
 
-  <button
-    onClick={downloadPDF}
-    className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-semibold text-white hover:bg-white/10"
-  >
-    Descargar PDF
-  </button>
 </div>
 
 <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-white/60">
