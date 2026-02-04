@@ -204,7 +204,7 @@ const selectedShows = useMemo(() => {
 
 async function downloadPNG() {
   if (!posterRef.current) return;
-
+  await document.fonts.ready;
   const dataUrl = await htmlToImage.toPng(posterRef.current, {
     cacheBust: true,
     backgroundColor: "#0e7a4c", // si después usás bg PNG, lo cambiamos a transparente
@@ -239,190 +239,302 @@ async function downloadPNG() {
 
   const openSlot = slots.find((s) => s.time === openTime) ?? null;
 
-  return (
-    <div className="min-h-dvh bg-[#0b0b10] text-white">
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0b0b10]/80 backdrop-blur">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
-          <div className="flex flex-col">
-            <div className="text-sm text-white/70">Cosquín Rock</div>
-            <div className="text-lg font-semibold">Mi schedule</div>
-          </div>
+return (
+  <div
+  className="min-h-dvh text-white"
+  style={{
+    backgroundImage: "url('/bg/cr-background.png')",
+    backgroundRepeat: "repeat",
+    backgroundSize: "960px 1920px",
+    backgroundPosition: "top left",
+  }}
+>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setDay(1)}
-              className={[
-                "rounded-full px-3 py-1 text-sm",
-                day === 1 ? "bg-white text-black" : "bg-white/10 text-white",
-              ].join(" ")}
-            >
-              Día 1
-            </button>
-            <button
-              onClick={() => setDay(2)}
-              className={[
-                "rounded-full px-3 py-1 text-sm",
-                day === 2 ? "bg-white text-black" : "bg-white/10 text-white",
-              ].join(" ")}
-            >
-              Día 2
-            </button>
-          </div>
-        </div>
-      </header>
+  <div className="min-h-dvh bg-black/20">
 
-      <main className="mx-auto max-w-2xl space-y-4 px-4 py-6">
-        {/* left: selector */}
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-white/70">{formatDayLabel(day)}</div>
-              <div className="text-base text-white/90">{dayDate}</div>
-            </div>
+    {/* HEADER */}
+{/* HEADER */}
+<header className="sticky top-0 z-40 w-full mb-6">
+  <div className="border-b border-white/10 bg-transparent /90 backdrop-blur">
+    <div className="mx-auto flex h-[64px] max-w-6xl items-center justify-center px-4">
+      <img
+        src="/logoh.png"
+        alt="Cosquín Rock"
+        className="h-9 w-auto"
+      />
+    </div>
+  </div>
+</header>
 
-            <button
-              onClick={clearDay}
-              className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-sm text-white/80 hover:bg-white/10"
-            >
-              Limpiar día
-            </button>
-          </div>
+    {/* CONTENT */}
+    <main className="mx-auto max-w-4xl px-5 py-6">
+  {/* CONTENEDOR DE LECTURA */}
 
-          <div className="space-y-2">
-            {slots.map((slot) => {
-          const picked = selectedSummaryForSlot(slot);
-              return (
-                <button
-                  key={slot.time}
-                  onClick={() => setOpenTime(slot.time)}
-                  className="w-full rounded-2xl border border-white/10 bg-white/5 p-3 text-left hover:bg-white/10"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="text-base font-semibold">{slot.time} – {slot.time.replace(":00", ":59")}</div>
-                    <div className="flex flex-wrap justify-end gap-1">
-                      {picked.length === 0 ? (
-                        <span className="text-sm text-white/50">Sin elegir</span>
-                      ) : (
-                        picked.map((p, idx) => (
-                          <span key={idx} className="rounded-full bg-white/10 px-2 py-0.5 text-xs">
-                            {p.label}
-                          </span>
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="text-xs text-white/60">
-                      Opciones: {slot.shows.length + 1} (incluye Libre)
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white/70">
-            Tip: podés elegir más de un show por horario. Si marcás “Libre”, se limpian las otras opciones de ese horario.
-          </div>
-        </section>
-  <div className="space-y-2">
-
-  {/* Poster oculto SOLO para export */}
-{/* Poster oculto SOLO para export (1080x1920) */}
-<div className="fixed left-[-9999px] top-0">
-  <div ref={posterRef}>
-    <ExportPoster
-      dayLabel={formatDayLabel(day)}
-      dateLabel={day === 1 ? "14 FEB" : "15 FEB"}
-      venueLabel="AERÓDROMO SANTA MARÍA DE PUNILLA"
-      selectedShows={selectedShows}
-    />
+  <div className="rounded-[32px] bg-transparent backdrop-blur-md border border-white/10 p-4 md:p-6">
+    
+    {/* Header día + limpiar */}
+    {/* TITLE STRIP (ABAJO DEL HEADER) */}
+  <div className="border-b border-white/10">
+  <div className="mx-auto max-w-6xl px-4 py-4 text-center">
+    <div
+      className="text-[20px] md:text-[28px] leading-tight tracking-wider uppercase text-white"
+      style={{ fontFamily: "var(--font-meloriac)" }}
+    >
+      ARMA TU GRILLA
+      <br className="hidden md:block" />
+      PARA EL{" "}
+      <span className="text-[#DD5227]">
+        {day === 1 ? "14" : "15"}
+      </span>{" "}
+      DE FEBRERO
+    </div>
   </div>
 </div>
 
 
-  <button
-    onClick={downloadPNG}
-    className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-black hover:opacity-90"
-  >
-    Descargar PNG
-  </button>
+{/* TABS DERECHA */}
+      <div className="flex justify-center gap-4 md:gap-6 mb-4 mt-6">
+        <button
+          onClick={() => setDay(1)}
+          className={[
+            "px-6 md:px-10",
+            "text-[18px] md:text-[22px] uppercase",
+            "tracking-widest",
+            "transition",
+            day === 1 ? "bg-[#DD5227] text-white" : "bg-white/10 text-white/80 hover:bg-white/20",
+          ].join(" ")}
+          style={{ fontFamily: "var(--font-circular)" }}
+        >
+          DÍA 1
+        </button>
 
-</div>
+        <button
+          onClick={() => setDay(2)}
+          className={[
+            "px-6 md:px-10",
+            "text-[18px] md:text-[22px] uppercase",
+            "tracking-widest",
+            "transition",
+            day === 2 ? "bg-[#DD5227] text-white" : "bg-white/10 text-white/80 hover:bg-white/20",
+          ].join(" ")}
+          style={{ fontFamily: "var(--font-circular)" }}
+        >
+          DÍA 2
+        </button>
+      </div>
+    <div className="flex items-center justify-between">
 
-      </main>
+      <button
+        onClick={clearDay}
+        className="rounded-full border border-white/20 bg-white/10 px-3 py-2 text-xs tracking-wider text-white hover:bg-white/20"
+      >
+        LIMPIAR DÍA
+      </button>
+    </div>
 
-      {/* bottom sheet modal */}
-      {openSlot && (
-        <div className="fixed inset-0 z-40">
+    {/* GRILLA */}
+    <div className="mt-4 space-y-3 ">
+      {slots.map((slot) => {
+        const picked = selectedSummaryForSlot(slot);
+
+        return (
           <button
-            aria-label="Close"
-            className="absolute inset-0 bg-black/60"
-            onClick={() => setOpenTime(null)}
-          />
-          <div className="absolute bottom-0 left-0 right-0 mx-auto max-w-4xl rounded-t-3xl border border-white/10 bg-[#0b0b10] p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-white/70">Elegir para</div>
-                <div className="text-lg font-semibold">{openSlot.time}</div>
-              </div>
-              <button
-                onClick={() => setOpenTime(null)}
-                className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-sm text-white/80 hover:bg-white/10"
+            key={slot.time}
+            onClick={() => setOpenTime(slot.time)}
+            className="w-full rounded-2xl border border-white/15 p-4 text-left hover:bg-white/10 bg-[#0e2f61]"
+          >
+            <div className="flex items-start justify-between gap-3 ">
+              <div
+                className="text-[18px] leading-none tracking-wider"
+                style={{ fontFamily: "var(--font-circular)" }}
               >
-                Cerrar
-              </button>
+                {slot.time} – {slot.time.replace(":00", ":59")}
+              </div>
+
+              <div className="flex flex-wrap justify-end gap-1">
+                {picked.length === 0 ? (
+                  <span className="text-xs text-white/55 tracking-wide">
+                    Sin elegir
+                  </span>
+                ) : (
+                  <>
+                    {picked.slice(0, 2).map((p, idx) => (
+                      <span
+                        key={idx}
+                        className="rounded-full bg-white/15 px-6 py-1 text-[11px] tracking-wider" style={{fontFamily: "var(--font-cosquin)", fontSize: "16px"}}
+                      >
+                        {p.label}
+                      </span>
+                    ))}
+                    {picked.length > 2 && (
+                      <span className="rounded-full bg-white/15 px-6 py-1 text-[11px] tracking-wider" style={{fontFamily: "var(--font-cosquin)", fontSize: "16px"}}>
+                        +{picked.length - 2}
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
 
-            <div className="mt-4 space-y-2">
-              {/* FREE option */}
-              <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3 hover:bg-white/10">
-                <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs">Opción</span>
-                  <span className="text-sm">Libre / descanso</span>
-                </div>
-                <input
-                  type="checkbox"
-                  className="h-5 w-5"
-                  checked={(selection[openSlot.time] ?? []).includes("FREE")}
-                  onChange={() => toggleOption(openSlot.time, "FREE")}
-                />
-              </label>
-
-              {/* shows */}
-              {openSlot.shows.map((s) => {
-                const key = showKey(s);
-                const checked = (selection[openSlot.time] ?? []).includes(key);
-                return (
-                  <label
-                    key={key}
-                    className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3 hover:bg-white/10"
-                  >
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <span className={stageBadge(s.stage)}>{s.stage}</span>
-                        <span className="text-sm">{s.artist}</span>
-                      </div>
-                      <div className="text-xs text-white/60">{s.time}</div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      className="h-5 w-5"
-                      checked={checked}
-                      onChange={() => toggleOption(openSlot.time, key)}
-                    />
-                  </label>
-                );
-              })}
+            <div className="mt-2 text-[11px] text-white/60 tracking-wide">
+             {slot.shows.length + 1} opciones
             </div>
+          </button>
+        );
+      })}
+    </div>
+  </div>
+</main>
 
-            <div className="mt-4 pb-2 text-xs text-white/60">
-              Multi-select activo. Si querés que sea “solo una opción”, lo cambiamos en 2 líneas.
+
+{/* MODAL */}
+{openSlot && (
+  <div className="fixed inset-0 z-40">
+    {/* overlay */}
+    <button
+      aria-label="Close"
+      className="absolute inset-0 bg-black/60"
+      onClick={() => setOpenTime(null)}
+    />
+
+    {/* sheet */}
+    <div className="absolute bottom-0 left-0 right-0 mx-auto w-full max-w-4xl rounded-t-3xl border border-white/10" style={{
+    backgroundImage: "url('/bg/cr-background.png')",
+    backgroundSize: "960px 960px",
+  }}>
+      
+      {/* Header fijo */}
+      <div className="sticky top-0 z-10 border-b border-white/10 p-4 backdrop-blur">
+        <div className="flex items-center justify-between">
+          <div>
+            <div
+              className="text-xs text-white/70 tracking-wider"
+              style={{ fontFamily: "var(--font-circular)" }}
+            >
+              Elegir para
+            </div>
+            <div
+              className="text-[26px] leading-none tracking-widest"
+              style={{ fontFamily: "var(--font-cosquin)" }}
+            >
+              {openSlot.time} – {openSlot.time.replace(":00", ":59")}
             </div>
           </div>
+
+          <button
+            onClick={() => setOpenTime(null)}
+            className="rounded-full border border-white/15 bg-white/10 px-5 py-2 text-xs tracking-wider text-white hover:bg-white/20"
+            style={{ fontFamily: "var(--font-cosquin)" }}
+          >
+            CERRAR
+          </button>
         </div>
-      )}
+      </div>
+
+      {/* Body scrolleable */}
+      <div className="max-h-[75dvh] overflow-y-auto p-4">
+        <div className="space-y-3">
+          
+          {/* FREE option */}
+          <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/15 bg-[#0e2f61] p-4 hover:bg-[#0e2f61]/90">
+            <div className="flex items-center gap-3">
+              <span
+                className="rounded-full bg-white/15 px-6 py-1 tracking-wider"
+                style={{ fontFamily: "var(--font-cosquin)", fontSize: "16px" }}
+              >
+                OPCIÓN
+              </span>
+
+              <div className="flex flex-col">
+                <span
+                  className="text-[16px] tracking-wide text-white"
+                  style={{ fontFamily: "var(--font-circular)" }}
+                >
+                  Libre / descanso
+                </span>
+                <span className="text-xs text-white/60 tracking-wide">
+                  (si lo marcás, se limpian las otras opciones)
+                </span>
+              </div>
+            </div>
+
+            {/* checkbox estético */}
+            <div className="relative">
+              <input
+                type="checkbox"
+                className="peer sr-only"
+                checked={(selection[openSlot.time] ?? []).includes("FREE")}
+                onChange={() => toggleOption(openSlot.time, "FREE")}
+              />
+              <div className="h-7 w-7 rounded-md border border-white/20 bg-white/10 peer-checked:bg-[#DD5227] peer-checked:border-[#DD5227]" />
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white opacity-0 peer-checked:opacity-100">
+                ✓
+              </div>
+            </div>
+          </label>
+
+          {/* shows */}
+          {openSlot.shows.map((s) => {
+            const key = showKey(s);
+            const checked = (selection[openSlot.time] ?? []).includes(key);
+
+            return (
+              <label
+                key={key}
+                className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/15 bg-[#0e2f61] p-4 hover:bg-[#0e2f61]/90"
+              >
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-3">
+                    {/* Stage badge (mantenemos tu stageBadge pero lo “encapsulamos” en pill) */}
+                    <span className={stageBadge(s.stage)}>{s.stage}</span>
+
+                    <span
+                      className="text-[16px] tracking-wide text-white"
+                      style={{ fontFamily: "var(--font-circular)" }}
+                    >
+                      {s.artist}
+                    </span>
+                  </div>
+
+                  <div
+                    className="text-xs text-white/70 tracking-wide"
+                    style={{ fontFamily: "var(--font-circular)" }}
+                  >
+                    {s.time}
+                  </div>
+                </div>
+
+                {/* checkbox estético */}
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    className="peer sr-only"
+                    checked={checked}
+                    onChange={() => toggleOption(openSlot.time, key)}
+                  />
+                  <div className="h-7 w-7 rounded-md border border-white/20 bg-white/10 peer-checked:bg-[#DD5227] peer-checked:border-[#DD5227]" />
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white opacity-0 peer-checked:opacity-100">
+                    ✓
+                  </div>
+                </div>
+              </label>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 pb-2 text-xs text-white/60 tracking-wide">
+          Multi-select activo.
+        </div>
+      </div>
     </div>
-  );
+  </div>
+)}
+{/* FOOTER */}
+<footer className="mt-12 mb-6 text-center bg-transparenttext-white/70 text-sm tracking-wide">
+  &copy; 2024 Cosquín Rock. Todos los derechos reservados.
+</footer>
+  </div>
+
+  </div>
+);
 }

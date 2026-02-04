@@ -28,3 +28,34 @@ body {
 .cr-shadow{
   text-shadow: 0 4px 0 rgba(0,0,0,0.25);
 }
+
+:root {
+  --font-cosquin: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.font-cosquin {
+  font-family: var(--font-cosquin);
+}
+
+.font-circular {
+  font-family: 'Circular', sans-serif;
+
+}
+
+.font-meloriac {
+  font-family: 'Meloriac', sans-serif;
+}
+
+/* Interletrado (tracking) */
+.tracking-tight { letter-spacing: -0.02em; }
+.tracking-normal { letter-spacing: 0; }
+.tracking-wide { letter-spacing: 0.04em; }
+.tracking-wider { letter-spacing: 0.08em; }
+.tracking-widest { letter-spacing: 0.12em; }
+
+/* Opcional: si la font es muy “compacta” en mayúsculas */
+.uppercase-balance {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
