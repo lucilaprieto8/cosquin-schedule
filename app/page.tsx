@@ -50,16 +50,33 @@ function uniqSortedTimes(shows: Show[]) {
   return Array.from(set).sort((a, b) => timeToSortMinutes(a) - timeToSortMinutes(b));
 }
 
-function groupByTime(shows: Show[]): Slot[] {
+function toHourKey(time: string) {
+  // "14:30" -> "14:00"
+  const [hh] = time.split(":");
+  return `${hh}:00`;
+}
+
+function hourSortMinutes(hourKey: string) {
+  // "00:00" al final
+  const [hhStr] = hourKey.split(":");
+  const hh = Number(hhStr);
+  const base = hh * 60;
+  return hh < 6 ? base + 24 * 60 : base;
+}
+
+function groupByHour(shows: Show[]): Slot[] {
   const by: Record<string, Show[]> = {};
   for (const s of shows) {
-    by[s.time] = by[s.time] || [];
-    by[s.time].push(s);
+    const key = toHourKey(s.time);
+    by[key] = by[key] || [];
+    by[key].push(s);
   }
-  const times = Object.keys(by).sort((a, b) => timeToSortMinutes(a) - timeToSortMinutes(b));
-  return times.map((time) => ({
+
+  const keys = Object.keys(by).sort((a, b) => hourSortMinutes(a) - hourSortMinutes(b));
+
+  return keys.map((time) => ({
     time,
-    shows: by[time].sort((a, b) => a.stage.localeCompare(b.stage)),
+    shows: by[time].sort((a, b) => a.time.localeCompare(b.time) || a.stage.localeCompare(b.stage)),
   }));
 }
 
@@ -113,7 +130,7 @@ export default function Page() {
   const [openTime, setOpenTime] = useState<string | null>(null);
 
   const dayShows = useMemo(() => allShows.filter((s) => s.day === day), [allShows, day]);
-  const slots = useMemo(() => groupByTime(dayShows), [dayShows]);
+  const slots = useMemo(() => groupByHour(dayShows), [dayShows]);
 
   const [allSelection, setAllSelection] = useState<Record<string, Selection>>({});
   const selection: Selection = allSelection[String(day)] ?? {};
@@ -209,14 +226,16 @@ async function downloadPNG() {
 
   const times = useMemo(() => uniqSortedTimes(dayShows), [dayShows]);
 
-  function selectedSummaryForTime(time: string) {
-    const keys = selection[time] ?? [];
-    if (keys.includes("FREE")) return [{ label: "Libre", stage: "" }];
+  function selectedSummaryForSlot(slot: Slot) {
+  const keys = selection[slot.time] ?? [];
+  if (keys.length === 0) return [];
 
-    const timeShows = dayShows.filter((s) => s.time === time);
-    const picked = timeShows.filter((s) => keys.includes(showKey(s)));
-    return picked.map((s) => ({ label: s.artist, stage: s.stage }));
-  }
+  if (keys.includes("FREE")) return [{ label: "Libre", stage: "" }];
+
+  const picked = slot.shows.filter((s) => keys.includes(showKey(s)));
+  return picked.map((s) => ({ label: s.artist, stage: s.stage }));
+}
+
 
   const openSlot = slots.find((s) => s.time === openTime) ?? null;
 
@@ -252,7 +271,7 @@ async function downloadPNG() {
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-4xl gap-6 px-4 py-6 lg:grid-cols-2">
+      <main className="mx-auto max-w-2xl space-y-4 px-4 py-6">
         {/* left: selector */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
@@ -271,7 +290,7 @@ async function downloadPNG() {
 
           <div className="space-y-2">
             {slots.map((slot) => {
-              const picked = selectedSummaryForTime(slot.time);
+          const picked = selectedSummaryForSlot(slot);
               return (
                 <button
                   key={slot.time}
@@ -279,7 +298,7 @@ async function downloadPNG() {
                   className="w-full rounded-2xl border border-white/10 bg-white/5 p-3 text-left hover:bg-white/10"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="text-base font-semibold">{slot.time}</div>
+                    <div className="text-base font-semibold">{slot.time} – {slot.time.replace(":00", ":59")}</div>
                     <div className="flex flex-wrap justify-end gap-1">
                       {picked.length === 0 ? (
                         <span className="text-sm text-white/50">Sin elegir</span>
@@ -307,70 +326,7 @@ async function downloadPNG() {
             Tip: podés elegir más de un show por horario. Si marcás “Libre”, se limpian las otras opciones de ese horario.
           </div>
         </section>
-
-        {/* right: poster preview */}
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-white/70">Preview para export</div>
-            <div className="text-xs text-white/50">(export lo sumamos en el próximo paso)</div>
-          </div>
-
-          <div
-            ref={posterRef}
-            className="mx-auto aspect-[9/16] w-full max-w-[420px] rounded-3xl border border-white/10 bg-gradient-to-b from-white/10 to-white/5 p-4"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-xs text-white/70">Mi Cosquín Rock 2026</div>
-                <div className="text-xl font-semibold">{formatDayLabel(day)}</div>
-                <div className="text-sm text-white/70">{dayDate}</div>
-              </div>
-              <div className="rounded-2xl bg-white/10 px-3 py-2 text-right">
-                <div className="text-xs text-white/70">Nombre</div>
-                <div className="text-sm text-white/90">Luci</div>
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-2">
-              {times.map((t) => {
-                const keys = selection[t] ?? [];
-                const isFree = keys.includes("FREE");
-                const timeShows = dayShows.filter((s) => s.time === t);
-                const pickedShows = isFree
-                  ? []
-                  : timeShows.filter((s) => keys.includes(showKey(s)));
-
-                return (
-                  <div key={t} className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="text-sm font-semibold">{t}</div>
-
-                      <div className="flex flex-1 flex-col items-end gap-1">
-                        {keys.length === 0 ? (
-                          <div className="text-sm text-white/50">Sin elegir</div>
-                        ) : isFree ? (
-                          <div className="text-sm">Libre</div>
-                        ) : (
-                          pickedShows.map((s) => (
-                            <div key={showKey(s)} className="flex items-center gap-2 text-sm">
-                              <span className={stageBadge(s.stage)}>{s.stage}</span>
-                              <span className="text-white/90">{s.artist}</span>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-4 text-xs text-white/60">
-              Horarios sujetos a cambios.
-            </div>
-          </div>
-
-         <div className="grid grid-cols-2 gap-2">
+  <div className="space-y-2">
 
   {/* Poster oculto SOLO para export */}
 {/* Poster oculto SOLO para export (1080x1920) */}
@@ -380,7 +336,6 @@ async function downloadPNG() {
       dayLabel={formatDayLabel(day)}
       dateLabel={day === 1 ? "14 FEB" : "15 FEB"}
       venueLabel="AERÓDROMO SANTA MARÍA DE PUNILLA"
-      hashtag="#CR26"
       selectedShows={selectedShows}
     />
   </div>
@@ -391,16 +346,11 @@ async function downloadPNG() {
     onClick={downloadPNG}
     className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-black hover:opacity-90"
   >
-    Descargar PNG (Stories)
+    Descargar PNG
   </button>
 
 </div>
 
-<div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-white/60">
-  Tip: en Instagram, subí el PNG como Story y guardalo como destacado. Si querés fondo de pantalla, te armo otra export size.
-</div>
-
-        </section>
       </main>
 
       {/* bottom sheet modal */}

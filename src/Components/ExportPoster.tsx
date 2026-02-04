@@ -14,7 +14,6 @@ type Props = {
   dayLabel: string;           // "Día 1" / "Día 2"
   dateLabel: string;          // "2026-02-14" o "14 FEB" (lo que quieras)
   venueLabel?: string;        // "AERÓDROMO SANTA MARÍA DE PUNILLA"
-  hashtag?: string;           // "#CR26"
   selectedShows: Show[];      // solo lo elegido por el usuario
 };
 
@@ -23,7 +22,7 @@ function getArtistStyle(name: string) {
   return (
     ARTIST_STYLES[key] ?? {
       colorClass: "text-white",
-      sizeClass: "text-[20px]",
+      sizeClass: "text-[30px]",
     }
   );
 }
@@ -47,7 +46,6 @@ export default function ExportPoster({
   dayLabel,
   dateLabel,
   venueLabel = "AERÓDROMO SANTA MARÍA DE PUNILLA",
-  hashtag = "#CR26",
   selectedShows,
 }: Props) {
 const artists = useMemo(() => {
@@ -68,19 +66,19 @@ const artists = useMemo(() => {
   ];
 
   const sizeClasses = [
-    "text-[56px]", // grande
-    "text-[46px]",
-    "text-[38px]",
+    "text-[66px]", // grande
+    "text-[56px]",
+    "text-[48px]",
+    "text-[40px]",
+    "text-[34px]",
     "text-[30px]",
-    "text-[24px]",
-    "text-[20px]",
   ];
 
   // “headliners” (los primeros 3 seleccionados) un toque más grandes
   function pickSizeClass(name: string, idx: number) {
-    if (idx === 0) return "text-[64px]";
-    if (idx === 1) return "text-[56px]";
-    if (idx === 2) return "text-[50px]";
+    if (idx === 0) return "text-[74px]";
+    if (idx === 1) return "text-[66px]";
+    if (idx === 2) return "text-[60px]";
     const h = hashString(name);
     return sizeClasses[h % sizeClasses.length];
   }
@@ -95,6 +93,8 @@ const artists = useMemo(() => {
   style={{
     width: 1080,
     height: 1920,
+    padding: 64,
+    paddingTop: 120,
     backgroundImage: "url('/bg-cosquin.png')",
     backgroundSize: "cover",
     backgroundPosition: "center",
@@ -103,33 +103,21 @@ const artists = useMemo(() => {
 >
 
         {/* Header */}
-        <div className="flex items-start justify-between">
-          {/* Logo placeholder */}
-          <div className="rounded-[26px] bg-white/15 px-6 py-4">
-            <div className="text-[22px] font-semibold tracking-tight opacity-90">COSQUÍN</div>
-            <div className="text-[38px] font-black leading-none tracking-tight">
-              ROCK <span className="text-[#FF8A00]">⚡</span>
-            </div>
-            <div className="mt-1 text-[22px] font-bold opacity-90">2026</div>
-          </div>
+        <div className="flex items-start justify-center">
 
           {/* Día + fecha */}
-          <div className="text-right">
-            <div className="inline-block rounded-full bg-white/15 px-6 py-2 text-[22px] font-semibold uppercase tracking-wide">
+          <div className="text-center">
+            <div className="inline-block rounded-full bg-white/15 px-6 py-2 text-[32px] font-semibold uppercase tracking-wide">
               {dayLabel}
             </div>
-            <div className="mt-2 text-[86px] font-black leading-none tracking-tight">
+            <div className="mt-2 text-[96px] font-black leading-none tracking-tight">
               {dateLabel}
             </div>
-            <div className="mt-2 text-[22px] font-semibold uppercase tracking-wide opacity-90">
+            <div className="mt-2 text-[32px] font-semibold uppercase tracking-wide opacity-90">
               {venueLabel}
             </div>
           </div>
         </div>
-<div className="mb-6 text-center">
-  <div className="text-[22px] opacity-90">Mi 14 de febrero en</div>
-  <div className="text-[56px] font-black tracking-tight">COSQUÍN ROCK</div>
-</div>
 
         {/* Word cloud */}
         <div className="mt-[54px]">
@@ -168,7 +156,9 @@ const artists = useMemo(() => {
         <div className="absolute bottom-[56px] left-0 right-0 px-[64px]">
           <div className="flex items-center justify-center gap-3">
             <div className="h-[10px] w-[10px] rounded-full bg-white/70" />
-            <div className="text-[34px] font-black tracking-tight">{hashtag}</div>
+            <div className="h-50 w-100">
+              <img src="/logo.png" alt="Logo" className="h-full w-full object-contain" />
+            </div>
             <div className="h-[10px] w-[10px] rounded-full bg-white/70" />
           </div>
         </div>
