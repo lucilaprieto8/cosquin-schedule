@@ -117,6 +117,34 @@ function stageBadge(stage: string) {
   return `${base} ${map[stage] ?? "border-white/20 bg-white/10"}`;
 }
 
+function stageStyle(stage: string) {
+  // elegí colores de marca / los afinamos con el manual después
+  const base = {
+    card: "border-white/15 text-white hover:brightness-[1.05] transition",
+    badge: "border-white/20 bg-white/10",
+    checkOn: "peer-checked:border-[#DD5227] peer-checked:bg-[#DD5227]",
+  };
+
+  const map: Record<string, { cardBg: string; badgeBg?: string; checkOn?: string }> = {
+    Norte: { cardBg: "bg-sky-500/20" },
+    Sur: { cardBg: "bg-emerald-500/18" },
+    Montaña: { cardBg: "bg-violet-500/18" },
+    Boomerang: { cardBg: "bg-amber-500/18" },
+    Paraguay: { cardBg: "bg-fuchsia-500/18" },
+    Electronic: { cardBg: "bg-cyan-500/18" },
+    "La Casita del Blues": { cardBg: "bg-indigo-500/18" },
+    Sorpresa: { cardBg: "bg-rose-500/18" },
+  };
+
+  const cfg = map[stage] ?? { cardBg: "bg-white/10" };
+
+  return {
+    cardClass: `rounded-2xl border ${base.card} ${cfg.cardBg}`,
+    badgeClass: `inline-flex items-center rounded-full border px-2 py-0.5 text-xs leading-none ${base.badge}`,
+    checkOnClass: cfg.checkOn ?? base.checkOn,
+  };
+}
+
 export default function Page() {
   
 
@@ -281,6 +309,39 @@ const openSlot = useMemo(
   [slots, openTime]
 );
 
+function slotCardClass(index: number) {
+  const base =
+    "w-full rounded-2xl border border-white/15 p-4 text-left hover:bg-white/10 transition";
+
+  // alternancia CR26: azul / teal / violeta / azul claro (todos del manual)
+  const variants = [
+    "bg-[#193E85]/80", // azul
+    "bg-[#377D8A]/75", // teal
+    "bg-[#3D15B8]/65", // violeta
+    "bg-[#77B4D2]/35", // celeste claro
+  ];
+
+  return `${base} ${variants[index % variants.length]}`;
+}
+
+const STAGE_STYLES: Record<string, { badge: string; chip: string }> = {
+  Norte: { badge: "border-[#77B4D2]/40 bg-[#77B4D2]/20 text-white", chip: "bg-[#77B4D2]/25 text-white" },
+  Sur: { badge: "border-[#A571CF]/40 bg-[#A571CF]/20 text-white", chip: "bg-[#A571CF]/25 text-white" },
+  "La Casita del Blues": { badge: "border-[#DD5227]/40 bg-[#DD5227]/20 text-white", chip: "bg-[#DD5227]/20 text-white" },
+  Montaña: { badge: "border-[#38754A]/50 bg-[#38754A]/25 text-white", chip: "bg-[#38754A]/25 text-white" },
+  Boomerang: { badge: "border-[#3D15B8]/45 bg-[#3D15B8]/20 text-white", chip: "bg-[#3D15B8]/20 text-white" },
+  Paraguay: { badge: "border-white/25 bg-white/10 text-white", chip: "bg-white/10 text-white" },
+  Electronic: { badge: "border-[#377D8A]/45 bg-[#377D8A]/20 text-white", chip: "bg-[#377D8A]/20 text-white" },
+  Sorpresa: { badge: "border-white/25 bg-white/10 text-white", chip: "bg-white/10 text-white" },
+};
+
+function stageBadge(stage: string) {
+  const base = "inline-flex items-center rounded-full border px-2 py-0.5 text-xs leading-none tracking-wide";
+  const s = STAGE_STYLES[stage]?.badge ?? "border-white/20 bg-white/10 text-white";
+  return `${base} ${s}`;
+}
+
+
 return (
   <div
     className="min-h-dvh text-white"
@@ -291,10 +352,10 @@ return (
       backgroundPosition: "top left",
     }}
   >
-    <div className="min-h-dvh bg-black/20">
+    <div className="min-h-dvh bg-black/45">
       {/* HEADER */}
       <header className="sticky top-0 z-40 mb-6 w-full">
-        <div className="border-b border-white/10 bg-transparent/90 backdrop-blur">
+          <div className="border-b border-white/10 bg-black/35 backdrop-blur">
           <div className="mx-auto flex h-[64px] max-w-6xl items-center justify-center px-4">
             <img src="/logoh.png" alt="Cosquín Rock" className="h-9 w-auto" />
           </div>
@@ -362,14 +423,14 @@ return (
 
           {/* GRILLA */}
           <div className="mt-4 space-y-3">
-            {slots.map((slot) => {
+            {slots.map((slot, index) => {
               const picked = selectedSummaryForSlot(slot);
 
               return (
                 <button
                   key={slot.time}
                   onClick={() => setOpenTime(slot.time)}
-                  className="w-full rounded-2xl border border-white/15 bg-[#0e2f61] p-4 text-left hover:bg-white/10"
+                  className={slotCardClass(index)}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div
@@ -386,18 +447,22 @@ return (
                         </span>
                       ) : (
                         <>
-                          {picked.slice(0, 2).map((p, idx) => (
-                            <span
-                              key={idx}
-                              className="rounded-full bg-white/15 px-6 py-1 tracking-wider"
-                              style={{
-                                fontFamily: "var(--font-cosquin)",
-                                fontSize: "16px",
-                              }}
-                            >
-                              {p.label}
-                            </span>
-                          ))}
+                         {picked.slice(0, 2).map((p, idx) => {
+  const chipClass =
+    "rounded-full px-6 py-1 tracking-wider border border-white/10 " +
+    (STAGE_STYLES[p.stage]?.chip ?? "bg-white/10 text-white");
+
+  return (
+    <span
+      key={idx}
+      className={chipClass}
+      style={{ fontFamily: "var(--font-cosquin)", fontSize: "16px" }}
+    >
+      {p.label}
+    </span>
+  );
+})}
+
                           {picked.length > 2 && (
                             <span
                               className="rounded-full bg-white/15 px-6 py-1 tracking-wider"
@@ -502,148 +567,148 @@ return (
 </div>
 
       </main>
-      {/* MODAL */}
-      {openSlot && (
-        <div className="fixed inset-0 z-50">
-          <button
-            aria-label="Close"
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={() => setOpenTime(null)}
-          />
+{/* MODAL */}
+{openSlot && (
+  <div className="fixed inset-0 z-50">
+    <button
+      aria-label="Close"
+      className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+      onClick={() => setOpenTime(null)}
+    />
 
-          <div className="absolute inset-0 flex items-center justify-center px-4 py-6">
-            <div
-              className="w-full max-w-4xl rounded-3xl border border-white/15"
-              style={{
-                backgroundImage: "url('/bg/cr-background.png')",
-                backgroundRepeat: "repeat",
-                backgroundSize: "960px 960px",
-              }}
+    <div className="absolute inset-0 flex items-center justify-center px-4 py-6">
+      <div
+        className="w-full max-w-4xl rounded-3xl border border-white/15 shadow-2xl"
+        style={{
+          backgroundImage: "url('/bg/cr-background.png')",
+          backgroundRepeat: "repeat",
+          backgroundSize: "960px 960px",
+        }}
+      >
+        <div className="rounded-3xl border border-white/10 bg-black/15 backdrop-blur-md">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-white/10 bg-transparent px-5 py-4 backdrop-blur-md">
+            <div>
+              <div
+                className="text-xs text-white/70 tracking-wider"
+                style={{ fontFamily: "var(--font-circular)" }}
+              >
+                Elegir para
+              </div>
+              <div
+                className="text-[26px] leading-none tracking-widest text-white"
+                style={{ fontFamily: "var(--font-cosquin)" }}
+              >
+                {openSlot.time} – {openSlot.time.replace(":00", ":59")}
+              </div>
+            </div>
+
+            <button
+              onClick={() => setOpenTime(null)}
+              className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-xs tracking-wider text-white hover:bg-white/20"
+              style={{ fontFamily: "var(--font-cosquin)" }}
             >
-              <div className="rounded-3xl bg-[#0e2f61]/95">
-                <div className="flex items-center justify-between border-b border-white/15 bg-[#0b2348]/70 px-5 py-4">
-                  <div>
-                    <div
-                      className="text-xs text-white/70 tracking-wider"
+              CERRAR
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="max-h-[75vh] overflow-y-auto px-5 py-4">
+            <div className="space-y-3">
+              {/* FREE (neutral) */}
+              <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/15 bg-white/10 p-4 hover:bg-white/15 transition">
+                <div className="flex items-center gap-3">
+                  <span
+                    className="rounded-full bg-white/15 px-6 py-1 tracking-wider"
+                    style={{ fontFamily: "var(--font-cosquin)", fontSize: "16px" }}
+                  >
+                    OPCIÓN
+                  </span>
+
+                  <div className="flex flex-col">
+                    <span
+                      className="text-[16px] tracking-wide text-white"
                       style={{ fontFamily: "var(--font-circular)" }}
                     >
-                      Elegir para
-                    </div>
-                    <div
-                      className="text-[26px] leading-none tracking-widest text-white"
-                      style={{ fontFamily: "var(--font-cosquin)" }}
-                    >
-                      {openSlot.time} – {openSlot.time.replace(":00", ":59")}
-                    </div>
+                      Libre / descanso
+                    </span>
+                    <span className="text-xs text-white/60 tracking-wide">
+                      (si lo marcás, se limpian las otras opciones)
+                    </span>
                   </div>
+                </div>
 
-                  <button
-                    onClick={() => setOpenTime(null)}
-                    className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-xs tracking-wider text-white hover:bg-white/20"
-                    style={{ fontFamily: "var(--font-cosquin)" }}
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    className="peer sr-only"
+                    checked={(selection[openSlot.time] ?? []).includes("FREE")}
+                    onChange={() => toggleOption(openSlot.time, "FREE")}
+                  />
+                  <div className="h-7 w-7 rounded-md border border-white/20 bg-white/10 peer-checked:border-[#DD5227] peer-checked:bg-[#DD5227]" />
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white opacity-0 peer-checked:opacity-100">
+                    ✓
+                  </div>
+                </div>
+              </label>
+
+              {/* shows (color por escenario) */}
+              {openSlot.shows.map((s) => {
+                const key = showKey(s);
+                const checked = (selection[openSlot.time] ?? []).includes(key);
+                const st = stageStyle(s.stage);
+
+                return (
+                  <label
+                    key={key}
+                    className={`flex cursor-pointer items-center justify-between p-4 ${st.cardClass}`}
                   >
-                    CERRAR
-                  </button>
-                </div>
-
-                <div className="max-h-[75vh] overflow-y-auto px-5 py-4">
-                  <div className="space-y-3">
-                    {/* FREE option */}
-                    <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/15 bg-[#0e2f61] p-4 hover:bg-[#0e2f61]/90">
+                    <div className="flex flex-col gap-2">
                       <div className="flex items-center gap-3">
+                        <span className={st.badgeClass}>{s.stage}</span>
+
                         <span
-                          className="rounded-full bg-white/15 px-6 py-1 tracking-wider"
-                          style={{
-                            fontFamily: "var(--font-cosquin)",
-                            fontSize: "16px",
-                          }}
+                          className="text-[16px] tracking-wide text-white"
+                          style={{ fontFamily: "var(--font-circular)" }}
                         >
-                          OPCIÓN
+                          {s.artist}
                         </span>
-
-                        <div className="flex flex-col">
-                          <span
-                            className="text-[16px] tracking-wide text-white"
-                            style={{ fontFamily: "var(--font-circular)" }}
-                          >
-                            Libre / descanso
-                          </span>
-                          <span className="text-xs text-white/60 tracking-wide">
-                            (si lo marcás, se limpian las otras opciones)
-                          </span>
-                        </div>
                       </div>
 
-                      <div className="relative">
-                        <input
-                          type="checkbox"
-                          className="peer sr-only"
-                          checked={(selection[openSlot.time] ?? []).includes("FREE")}
-                          onChange={() => toggleOption(openSlot.time, "FREE")}
-                        />
-                        <div className="h-7 w-7 rounded-md border border-white/20 bg-white/10 peer-checked:border-[#DD5227] peer-checked:bg-[#DD5227]" />
-                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white opacity-0 peer-checked:opacity-100">
-                          ✓
-                        </div>
+                      <div
+                        className="text-xs text-white/70 tracking-wide"
+                        style={{ fontFamily: "var(--font-circular)" }}
+                      >
+                        {s.time}
                       </div>
-                    </label>
+                    </div>
 
-                    {/* shows */}
-                    {openSlot.shows.map((s) => {
-                      const key = showKey(s);
-                      const checked = (selection[openSlot.time] ?? []).includes(key);
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        className="peer sr-only"
+                        checked={checked}
+                        onChange={() => toggleOption(openSlot.time, key)}
+                      />
+                      <div className={`h-7 w-7 rounded-md border border-white/20 bg-white/10 ${st.checkOnClass}`} />
+                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white opacity-0 peer-checked:opacity-100">
+                        ✓
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
 
-                      return (
-                        <label
-                          key={key}
-                          className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/15 bg-[#0e2f61] p-4 hover:bg-[#0e2f61]/90"
-                        >
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-3">
-                              <span className={stageBadge(s.stage)}>{s.stage}</span>
-
-                              <span
-                                className="text-[16px] tracking-wide text-white"
-                                style={{ fontFamily: "var(--font-circular)" }}
-                              >
-                                {s.artist}
-                              </span>
-                            </div>
-
-                            <div
-                              className="text-xs text-white/70 tracking-wide"
-                              style={{ fontFamily: "var(--font-circular)" }}
-                            >
-                              {s.time}
-                            </div>
-                          </div>
-
-                          <div className="relative">
-                            <input
-                              type="checkbox"
-                              className="peer sr-only"
-                              checked={checked}
-                              onChange={() => toggleOption(openSlot.time, key)}
-                            />
-                            <div className="h-7 w-7 rounded-md border border-white/20 bg-white/10 peer-checked:border-[#DD5227] peer-checked:bg-[#DD5227]" />
-                            <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white opacity-0 peer-checked:opacity-100">
-                              ✓
-                            </div>
-                          </div>
-                        </label>
-                      );
-                    })}
-                  </div>
-
-                  <div className="mt-4 pb-2 text-xs text-white/60 tracking-wide">
-                    Multi-select activo.
-                  </div>
-                </div>
-              </div>
+            <div className="mt-4 pb-2 text-xs text-white/60 tracking-wide">
+              Multi-select activo.
             </div>
           </div>
         </div>
-      )}
+      </div>
+    </div>
+  </div>
+)}
 
       {/* FOOTER */}
       <footer className="mt-12 mb-6 text-center text-sm tracking-wide text-white/70">
