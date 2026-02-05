@@ -4,27 +4,38 @@ export type ArtistStyle = {
 };
 
 export const ARTIST_STYLES: Record<string, ArtistStyle> = {
-  // NARANJA – headliners grandes
-  "AIRBAG": { colorClass: "text-orange-400", sizeClass: "text-[34px]" },
-  "BABASONICOS": { colorClass: "text-orange-400", sizeClass: "text-[34px]" },
-  "CIRO Y LOS PERSAS": { colorClass: "text-orange-400", sizeClass: "text-[34px]" },
-  "DIVIDIDOS": { colorClass: "text-orange-400", sizeClass: "text-[34px]" },
-  "FRANZ FERDINAND": { colorClass: "text-orange-400", sizeClass: "text-[34px]" },
-  "THE CHEMICAL BROTHERS (DJ SET)": { colorClass: "text-orange-400", sizeClass: "text-[34px]" },
+  // =========================
+  // NARANJA – headliners
+  // =========================
+  "AIRBAG": { colorClass: "cr-orange", sizeClass: "cr-s-34" },
+  "BABASONICOS": { colorClass: "cr-orange", sizeClass: "cr-s-34" },
+  "CIRO Y LOS PERSAS": { colorClass: "cr-orange", sizeClass: "cr-s-34" },
+  "DIVIDIDOS": { colorClass: "cr-orange", sizeClass: "cr-s-34" },
+  "FRANZ FERDINAND": { colorClass: "cr-orange", sizeClass: "cr-s-34" },
+  "THE CHEMICAL BROTHERS (DJ SET)": {
+    colorClass: "cr-orange",
+    sizeClass: "cr-s-34",
+  },
 
+  // =========================
   // VERDE LIMA
-  "CALIGARIS": { colorClass: "text-lime-300", sizeClass: "text-[28px]" },
-  "CUARTETO DE NOS": { colorClass: "text-lime-300", sizeClass: "text-[28px]" },
-  "DEVENDRA BANHART": { colorClass: "text-lime-300", sizeClass: "text-[28px]" },
-  "HERMANOS GUTIERREZ": { colorClass: "text-lime-300", sizeClass: "text-[28px]" },
-  "LOS ESPIRITUS": { colorClass: "text-lime-300", sizeClass: "text-[28px]" },
+  // =========================
+  "CALIGARIS": { colorClass: "cr-lime", sizeClass: "cr-s-28" },
+  "CUARTETO DE NOS": { colorClass: "cr-lime", sizeClass: "cr-s-28" },
+  "DEVENDRA BANHART": { colorClass: "cr-lime", sizeClass: "cr-s-28" },
+  "HERMANOS GUTIERREZ": { colorClass: "cr-lime", sizeClass: "cr-s-28" },
+  "LOS ESPIRITUS": { colorClass: "cr-lime", sizeClass: "cr-s-28" },
 
+  // =========================
   // VIOLETA
-  "ABEL PINTOS": { colorClass: "text-violet-400", sizeClass: "text-[26px]" },
-  "MARILINA BERTOLDI": { colorClass: "text-violet-400", sizeClass: "text-[26px]" },
-  "MARKY RAMONE": { colorClass: "text-violet-400", sizeClass: "text-[26px]" },
+  // =========================
+  "ABEL PINTOS": { colorClass: "cr-violet", sizeClass: "cr-s-26" },
+  "MARILINA BERTOLDI": { colorClass: "cr-violet", sizeClass: "cr-s-26" },
+  "MARKY RAMONE": { colorClass: "cr-violet", sizeClass: "cr-s-26" },
 
+  // =========================
   // BLANCO / base
-  "CTM": { colorClass: "text-white", sizeClass: "text-[22px]" },
-  "BRIGADO CREW": { colorClass: "text-white", sizeClass: "text-[22px]" },
+  // =========================
+  "CTM": { colorClass: "cr-white", sizeClass: "cr-s-22" },
+  "BRIGADO CREW": { colorClass: "cr-white", sizeClass: "cr-s-22" },
 };

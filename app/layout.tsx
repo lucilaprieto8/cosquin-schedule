@@ -19,7 +19,7 @@ const circular = localFont({
   src: "./fonts/Circular.otf",
   variable: "--font-circular",
   display: "swap",
-}); 
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,15 +38,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
-      <body         className={`
-          ${cosquinFont.variable}
-          ${circular.variable}
-          ${meloriac.variable}
-          antialiased
-        `}>
-        {children}
-      </body>
+    <html
+      lang="es"
+      className={`${cosquinFont.variable} ${circular.variable} ${meloriac.variable} ${geistSans.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
