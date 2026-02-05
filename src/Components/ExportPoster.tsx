@@ -9,12 +9,13 @@ type Show = {
   time: string;
 };
 
-type PosterVariant = "day1" | "day2" | "grid";
+type PosterVariant = "day1" | "day2" | "all";
 
 type Props = {
   variant: PosterVariant;
+  venueLabel?: string;
   selectedShows: Show[];
-  backgroundUrl?: string; // por ahora tu mismo bg, después lo cambiás por día
+  bgUrl?: string; // default: "/bg-cosquin.png"
 };
 
 function getArtistStyle(name: string) {
@@ -22,7 +23,7 @@ function getArtistStyle(name: string) {
   return (
     ARTIST_STYLES[key] ?? {
       colorClass: "text-white",
-      sizeClass: "text-[28px]",
+      sizeClass: "text-[30px]",
     }
   );
 }
@@ -30,41 +31,30 @@ function getArtistStyle(name: string) {
 function uniqueByArtist(shows: Show[]) {
   const map = new Map<string, Show>();
   for (const s of shows) {
-    const k = s.artist.trim().toUpperCase();
-    if (!map.has(k)) map.set(k, s);
+    const key = s.artist.trim().toUpperCase();
+    if (!map.has(key)) map.set(key, s);
   }
   return Array.from(map.values());
 }
 
-function getHeaderTexts(variant: PosterVariant) {
-  if (variant === "day1") {
-    return {
-      topKicker: "MI 14 DE FEBRERO EN COSQUÍN",
-      bigTitle: "COSQUÍN",
-      sub: "AERÓDROMO SANTA MARÍA DE PUNILLA",
-    };
-  }
-  if (variant === "day2") {
-    return {
-      topKicker: "MI 15 DE FEBRERO EN COSQUÍN",
-      bigTitle: "COSQUÍN",
-      sub: "AERÓDROMO SANTA MARÍA DE PUNILLA",
-    };
-  }
-  return {
-    topKicker: "MI GRILLA DE COSQUÍN",
-    bigTitle: "COSQUÍN",
-    sub: "AERÓDROMO SANTA MARÍA DE PUNILLA",
-  };
+function headerLabel(variant: PosterVariant) {
+  if (variant === "day1") return "MI 14 DE FEBRERO EN COSQUÍN";
+  if (variant === "day2") return "MI 15 DE FEBRERO EN COSQUÍN";
+  return "MI GRILLA DE COSQUÍN";
+}
+
+function dateBig(variant: PosterVariant) {
+  if (variant === "day1") return "14 FEBRERO";
+  if (variant === "day2") return "15 FEBRERO";
+  return "14 Y 15 FEBRERO";
 }
 
 export default function ExportPoster({
   variant,
+  venueLabel = "AERÓDROMO SANTA MARÍA DE PUNILLA",
   selectedShows,
-  backgroundUrl = "/bg-cosquin.png",
+  bgUrl = "/bg-cosquin.png",
 }: Props) {
-  const { topKicker, bigTitle, sub } = useMemo(() => getHeaderTexts(variant), [variant]);
-
   const artists = useMemo(() => {
     const uniq = uniqueByArtist(selectedShows);
     return uniq.map((s) => s.artist).sort((a, b) => a.localeCompare(b, "es"));
@@ -76,106 +66,107 @@ export default function ExportPoster({
       style={{
         width: 1080,
         height: 1920,
-        backgroundImage: `url('${backgroundUrl}')`,
+        backgroundImage: `url('${bgUrl}')`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
     >
-      {/* overlay para legibilidad (tipo story) */}
-      <div className="absolute inset-0 bg-[#081735]/55" />
-      <div className="absolute inset-0 bg-black/10" />
-
-      {/* contenido */}
-      <div className="relative h-full px-[84px] pt-[120px]">
-        {/* logo arriba */}
-        <div className="flex justify-center">
-          <img
-            src="/logo.png"
-            alt="Cosquín Rock"
-            className="h-[170px] w-auto object-contain"
-            draggable={false}
-          />
-        </div>
-
-        {/* header tipográfico */}
-        <div className="mt-10 text-center">
-          <div
-            className="text-[26px] uppercase tracking-[0.18em] text-white/90"
-            style={{ fontFamily: "var(--font-circular)" }}
-          >
-            {topKicker}
-          </div>
-
-          <div
-            className="mt-8 text-[122px] leading-none tracking-[0.18em]"
-            style={{ fontFamily: "var(--font-meloriac)" }}
-          >
-            {bigTitle}
-          </div>
-
-          <div
-            className="mt-4 text-[26px] uppercase tracking-[0.12em] text-white/85"
-            style={{ fontFamily: "var(--font-circular)" }}
-          >
-            {sub}
-          </div>
-        </div>
-
-        {/* lista / word cloud */}
-        <div className="mt-14">
-          {artists.length === 0 ? (
-            <div className="rounded-[28px] border border-white/15 bg-white/10 p-10 text-center">
-              <div
-                className="text-[34px] tracking-wide"
-                style={{ fontFamily: "var(--font-circular)" }}
-              >
-                Armá tu grilla
-              </div>
-              <div
-                className="mt-2 text-[22px] tracking-wide text-white/80"
-                style={{ fontFamily: "var(--font-circular)" }}
-              >
-                Elegí tus shows y exportá tu póster.
-              </div>
-            </div>
-          ) : (
-            <div className="text-center">
-              <div className="flex flex-wrap justify-center gap-x-5 gap-y-3">
-                {artists.map((name) => {
-                  const st = getArtistStyle(name);
-                  return (
-                    <span
-                      key={name}
-                      className={[
-                        "uppercase font-black leading-none",
-                        "cr-shadow",
-                        "tracking-wide",
-                        st.colorClass,
-                        st.sizeClass,
-                      ].join(" ")}
-                      style={{ fontFamily: "var(--font-cosquin)" }}
-                    >
-                      {name},
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* footer logo abajo (como tu ejemplo actual) */}
-        <div className="absolute bottom-[72px] left-0 right-0 px-[84px]">
-          <div className="flex items-center justify-center gap-4">
-            <div className="h-[10px] w-[10px] rounded-full bg-white/70" />
+      {/* wrapper de centrado real */}
+      <div className="absolute inset-0 flex flex-col items-center justify-between px-[64px] py-[110px] padding-top-[150px]">
+        {/* ====== CARD AREA ====== */}
+        <div className="relative w-full">
+          {/* LOGO (pisando el card) */}
+          <div className="pointer-events-none absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-[55%]">
             <img
-              src="/logoh.png"
+              src="/logo.png"
               alt="Cosquín Rock 2026"
-              className="h-[120px] w-auto object-contain"
-              draggable={false}
+              className="h-[220px] w-auto object-contain drop-shadow-[0_20px_0_rgba(0,0,0,0.25)]"
             />
-            <div className="h-[10px] w-[10px] rounded-full bg-white/70" />
           </div>
+
+          {/* CARD */}
+          <div className="relative mx-auto w-full rounded-[44px] bg-[#0e2f61]/92 px-[68px] pt-[150px] pb-[72px] shadow-[0_40px_80px_rgba(0,0,0,0.35)]">
+            {/* “zapatos” laterales */}
+            <div className="pointer-events-none absolute left-[-34px] top-[120px]">
+              <img src="/zapatoI.png" alt="" className="h-[110px] w-auto" />
+            </div>
+            <div className="pointer-events-none absolute right-[-34px] top-[120px] scale-x-[-1]">
+              <img src="/zapatoD.png" alt="" className="h-[110px] w-auto" />
+            </div>
+
+            {/* HEADERS dentro del card */}
+            <div className="text-center">
+              <div
+                className="text-[20px] uppercase tracking-[0.22em] text-white/85"
+                style={{ fontFamily: "var(--font-circular)" }}
+              >
+                {venueLabel}
+              </div>
+
+              <div
+                className="mt-5 text-[72px] leading-none tracking-[0.12em]"
+                style={{ fontFamily: "var(--font-cosquin)" }}
+              >
+                {dateBig(variant)}
+              </div>
+
+              <div
+                className="mt-6 text-[18px] uppercase tracking-[0.26em] text-white/90"
+                style={{ fontFamily: "var(--font-circular)" }}
+              >
+                {headerLabel(variant)}
+              </div>
+            </div>
+
+            {/* ARTISTAS */}
+            <div className="mt-12">
+              {artists.length === 0 ? (
+                <div className="rounded-[28px] bg-white/10 p-12 text-center">
+                  <div
+                    className="text-[34px] tracking-wide"
+                    style={{ fontFamily: "var(--font-circular)" }}
+                  >
+                    Armá tu grilla
+                  </div>
+                  <div
+                    className="mt-2 text-[22px] tracking-wide text-white/80"
+                    style={{ fontFamily: "var(--font-circular)" }}
+                  >
+                    Elegí tus shows y exportá tu póster.
+                  </div>
+                </div>
+              ) : (
+                <div className="mx-auto flex max-w-[860px] flex-wrap justify-center gap-x-5 gap-y-3 text-center">
+                  {artists.map((name) => {
+                    const style = getArtistStyle(name);
+
+                    return (
+                      <span
+                        key={name}
+                        className={[
+                          "uppercase font-black leading-none",
+                          "tracking-wide",
+                          "cr-shadow",
+                          style.colorClass,
+                          style.sizeClass,
+                        ].join(" ")}
+                      >
+                        {name},
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ====== FOOTER TEXT ====== */}
+        <div
+          className="text-center text-[16px] uppercase tracking-[0.20em] text-white/55"
+          style={{ fontFamily: "var(--font-circular)" }}
+        >
+          • COSQUÍN ROCK 2026 •
         </div>
       </div>
     </div>

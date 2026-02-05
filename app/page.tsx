@@ -344,14 +344,17 @@ function stageBadge(stage: string) {
 
 return (
   <div
-    className="min-h-dvh text-white"
-    style={{
-      backgroundImage: "url('/bg/cr-background.png')",
-      backgroundRepeat: "repeat",
-      backgroundSize: "960px 1920px",
-      backgroundPosition: "top left",
-    }}
-  >
+  className="min-h-dvh text-white relative overflow-hidden"
+  style={{
+    backgroundImage: "url('/bg/cr-background.png')",
+    backgroundRepeat: "no-repeat",
+    backgroundSize: "cover",        // 👈 clave
+    backgroundPosition: "top center",
+  }}
+>
+  {/* overlay negro */}
+  <div className="absolute inset-0 bg-black/35" />
+
     <div className="min-h-dvh bg-black/45">
       {/* HEADER */}
       <header className="sticky top-0 z-40 mb-6 w-full">
@@ -364,22 +367,17 @@ return (
 
       {/* CONTENT */}
       <main className="mx-auto max-w-4xl px-5 py-6">
-        <div className="rounded-[32px] border border-white/10 bg-transparent p-4 backdrop-blur-md md:p-6">
+      <div className="rounded-[32px] border border-white/10 bg-transparent p-4 backdrop-blur-md md:p-6">
           {/* TITLE STRIP */}
           <div className="border-b border-white/10">
-            <div className="mx-auto max-w-6xl px-4 py-4 text-center">
-              <div
-                className="text-[20px] uppercase leading-tight tracking-wider text-white md:text-[28px]"
-                style={{ fontFamily: "var(--font-meloriac)" }}
-              >
-                ARMA TU GRILLA
-                <br className="hidden md:block" />
-                PARA EL{" "}
-                <span className="text-[#DD5227]">{day === 1 ? "14" : "15"}</span>{" "}
-                DE FEBRERO
-              </div>
-            </div>
-          </div>
+    <div className="mx-auto flex max-w-6xl items-center justify-center">
+      <img
+        src="/titulo.png"
+        alt="Cosquín Rock"
+        className="h-[150px] w-auto"
+      />
+    </div>
+  </div>
 
           {/* TABS */}
           <div className="mb-4 mt-6 flex justify-center gap-4 md:gap-6">
@@ -456,7 +454,7 @@ return (
     <span
       key={idx}
       className={chipClass}
-      style={{ fontFamily: "var(--font-cosquin)", fontSize: "16px" }}
+      style={{ fontFamily: "var(--font-meloriac)", fontSize: "12px" }}
     >
       {p.label}
     </span>
@@ -467,8 +465,8 @@ return (
                             <span
                               className="rounded-full bg-white/15 px-6 py-1 tracking-wider"
                               style={{
-                                fontFamily: "var(--font-cosquin)",
-                                fontSize: "16px",
+                                fontFamily: "var(--font-meloriac)",
+                                fontSize: "12px",
                               }}
                             >
                               +{picked.length - 2}
@@ -540,29 +538,17 @@ return (
 </div>
         </div>
 {/* POSTERS OCULTOS (para exportar PNG) */}
-<div className="fixed left-[-99999px] top-0 opacity-0 pointer-events-none">
+<div className="fixed -left-[99999px] top-0">
   <div ref={posterRefDay1}>
-    <ExportPoster
-      variant="day1"
-      selectedShows={selectedShowsDay1}
-      backgroundUrl="/bg-cosquin.png"
-    />
+    <ExportPoster variant="day1" selectedShows={selectedShowsDay1} />
   </div>
 
   <div ref={posterRefDay2}>
-    <ExportPoster
-      variant="day2"
-      selectedShows={selectedShowsDay2}
-      backgroundUrl="/bg-cosquin.png"
-    />
+    <ExportPoster variant="day2" selectedShows={selectedShowsDay2} />
   </div>
 
   <div ref={posterRefAll}>
-    <ExportPoster
-      variant="grid"
-      selectedShows={selectedShowsAll}
-      backgroundUrl="/bg-cosquin.png"
-    />
+    <ExportPoster variant="all" selectedShows={selectedShowsAll} />
   </div>
 </div>
 
@@ -585,6 +571,8 @@ return (
           backgroundSize: "960px 960px",
         }}
       >
+          {/* overlay negro */}
+  <div className="absolute inset-0 bg-black/55" />
         <div className="rounded-3xl border border-white/10 bg-black/15 backdrop-blur-md">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/10 bg-transparent px-5 py-4 backdrop-blur-md">
@@ -597,7 +585,7 @@ return (
               </div>
               <div
                 className="text-[26px] leading-none tracking-widest text-white"
-                style={{ fontFamily: "var(--font-cosquin)" }}
+                style={{ fontFamily: "var(--font-circular)" }}
               >
                 {openSlot.time} – {openSlot.time.replace(":00", ":59")}
               </div>
@@ -606,7 +594,7 @@ return (
             <button
               onClick={() => setOpenTime(null)}
               className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-xs tracking-wider text-white hover:bg-white/20"
-              style={{ fontFamily: "var(--font-cosquin)" }}
+              style={{ fontFamily: "var(--font-circular)" }}
             >
               CERRAR
             </button>
@@ -620,7 +608,7 @@ return (
                 <div className="flex items-center gap-3">
                   <span
                     className="rounded-full bg-white/15 px-6 py-1 tracking-wider"
-                    style={{ fontFamily: "var(--font-cosquin)", fontSize: "16px" }}
+                    style={{ fontFamily: "var(--font-circular)", fontSize: "16px" }}
                   >
                     OPCIÓN
                   </span>
