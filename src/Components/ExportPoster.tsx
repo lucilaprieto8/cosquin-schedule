@@ -45,13 +45,13 @@ function uniqueArtists(shows: Show[]) {
 }
 
 function fontSizeForCount(n: number) {
-  if (n <= 8) return 90;
-  if (n <= 10) return 82;
-  if (n <= 14) return 70;
-  if (n <= 18) return 62;
-  if (n <= 24) return 54;
-  if (n <= 32) return 48;
-  return 42;
+  if (n <= 8) return 110;
+  if (n <= 10) return 100;
+  if (n <= 14) return 88;
+  if (n <= 18) return 80;
+  if (n <= 24) return 70;
+  if (n <= 32) return 66;
+  return 60;
 }
 
 export default function ExportPoster({ variant, selectedShows, instagram }: Props) {
@@ -107,7 +107,7 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
               textTransform: "uppercase",
               opacity: 0.9,
               textAlign: "center",
-              textShadow: "0 2px 18px rgba(0,0,0,0.45)",
+              textShadow: "0 2px 18px rgba(0,0,0,0.25)",
             }}
           >
             Elegí artistas para armar tu grilla
@@ -134,7 +134,7 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
                     lineHeight: 1.05,
                     letterSpacing: "0.04em",
                     textTransform: "uppercase",
-                    textShadow: "0 2px 18px rgba(0,0,0,0.45)",
+                    textShadow: "0 2px 18px rgba(0,0,0,0.25)",
 
                     display: "inline-block",
                     whiteSpace: "nowrap",
@@ -160,7 +160,7 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
             letterSpacing: "0.08em",
             textTransform: "uppercase",
             color: "rgba(255,255,255,0.85)",
-            textShadow: "0 3px 18px rgba(0,0,0,0.55)",
+            textShadow: "0 3px 18px rgba(0,0,0,0.25)",
             zIndex: 2,
           }}
         >

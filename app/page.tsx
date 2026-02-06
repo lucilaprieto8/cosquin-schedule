@@ -7,6 +7,7 @@ import day2 from "@/src/data/day2.json";
 import ExportPoster from "@/src/Components/ExportPoster";
 import { jsPDF } from "jspdf";
 
+
 type Show = {
   day: 1 | 2;
   date: string; // "2026-02-14"
@@ -69,12 +70,23 @@ function groupByHour(shows: Show[]): Slot[] {
     by[key].push(s);
   }
 
-  const keys = Object.keys(by).sort((a, b) => hourSortMinutes(a) - hourSortMinutes(b));
+  const keys = Object.keys(by).sort(
+    (a, b) => hourSortMinutes(a) - hourSortMinutes(b)
+  );
 
   return keys.map((time) => ({
     time,
-    shows: by[time].sort((a, b) => a.time.localeCompare(b.time) || a.stage.localeCompare(b.stage)),
+    shows: by[time].sort(
+      (a, b) => a.time.localeCompare(b.time) || a.stage.localeCompare(b.stage)
+    ),
   }));
+}
+
+function isIOS() {
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+    !("MSStream" in window)
+  );
 }
 
 function loadSelection(): Record<string, Selection> {
@@ -97,10 +109,7 @@ function saveSelection(all: Record<string, Selection>) {
  * Colores (los afinamos con el manual cuando quieras).
  * Acá los dejo sólidos para que se distingan.
  */
-const STAGE_PDF: Record<
-  string,
-  { border: string; bg: string }
-> = {
+const STAGE_PDF: Record<string, { border: string; bg: string }> = {
   Norte: { border: "#DD5227", bg: "rgba(221,82,39,0.10)" },
   Sur: { border: "#DD5227", bg: "rgba(221,82,39,0.10)" },
 
@@ -108,12 +117,14 @@ const STAGE_PDF: Record<
   Montaña: { border: "#1AD6FF", bg: "rgba(26,214,255,0.10)" },
   "La Casita del Blues": { border: "#B46CFF", bg: "rgba(180,108,255,0.10)" },
   Electronic: { border: "#FF4D4D", bg: "rgba(255,77,77,0.10)" },
-  "La Plaza Electronic Stage": { border: "#FF4D4D", bg: "rgba(255,77,77,0.10)" },
+  "La Plaza Electronic Stage": {
+    border: "#FF4D4D",
+    bg: "rgba(255,77,77,0.10)",
+  },
 
   Paraguay: { border: "#FFA800", bg: "rgba(255,168,0,0.10)" },
   Sorpresa: { border: "#FFA800", bg: "rgba(255,168,0,0.10)" },
 };
-
 
 const STAGE_THEME: Record<
   string,
@@ -215,6 +226,7 @@ function slotCardClass(index: number) {
 
 export default function Page() {
   const [instagram, setInstagram] = useState<string>("");
+
   const allShows: Show[] = useMemo(() => {
     // @ts-ignore
     return [...(day1 as Show[]), ...(day2 as Show[])];
@@ -223,27 +235,30 @@ export default function Page() {
   const [day, setDay] = useState<DayKey>(1);
   const [openTime, setOpenTime] = useState<string | null>(null);
 
-  const dayShows = useMemo(() => allShows.filter((s) => s.day === day), [allShows, day]);
+  const dayShows = useMemo(
+    () => allShows.filter((s) => s.day === day),
+    [allShows, day]
+  );
   const slots = useMemo(() => groupByHour(dayShows), [dayShows]);
 
-  const [allSelection, setAllSelection] = useState<Record<string, Selection>>({});
+  const [allSelection, setAllSelection] = useState<Record<string, Selection>>(
+    {}
+  );
   const selection: Selection = allSelection[String(day)] ?? {};
 
   function sanitizeInstagram(raw: string) {
-  // ✅ no deja arroba y deja SOLO letras
-  return raw.replace(/@/g, "").replace(/[^a-zA-Z]/g, "").slice(0, 30);
-}
+    // ✅ no deja arroba y deja SOLO letras
+    return raw.replace(/@/g, "").replace(/[^a-zA-Z]/g, "").slice(0, 30);
+  }
 
-const isInstagramValid = instagram.trim().length >= 2; // ajustá mínimo si querés
-const shareDisabled = !isInstagramValid;
+  const isInstagramValid = instagram.trim().length >= 2;
+  const shareDisabled = !isInstagramValid;
 
-  // load saved selections
   useEffect(() => {
     const loaded = loadSelection();
     setAllSelection(loaded);
   }, []);
 
-  // persist selections
   useEffect(() => {
     saveSelection(allSelection);
   }, [allSelection]);
@@ -320,60 +335,68 @@ const shareDisabled = !isInstagramValid;
     return [...selectedShowsDay1, ...selectedShowsDay2];
   }, [selectedShowsDay1, selectedShowsDay2]);
 
-async function waitForImages(el: HTMLElement) {
-  const imgs = Array.from(el.querySelectorAll("img"));
+  async function waitForImages(el: HTMLElement) {
+    const imgs = Array.from(el.querySelectorAll("img"));
 
-  await Promise.all(
-    imgs.map((img) => {
-      // ya cargada
-      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+    await Promise.all(
+      imgs.map((img) => {
+        if (img.complete && img.naturalWidth > 0) return Promise.resolve();
 
-      // esperar load/error
-      return new Promise<void>((resolve) => {
-        const done = () => resolve();
-        img.addEventListener("load", done, { once: true });
-        img.addEventListener("error", done, { once: true });
-      });
-    })
-  );
-}
+        return new Promise<void>((resolve) => {
+          const done = () => resolve();
+          img.addEventListener("load", done, { once: true });
+          img.addEventListener("error", done, { once: true });
+        });
+      })
+    );
+  }
 
-async function exportPNGFromRef(
+  async function exportAndShare(
   ref: React.RefObject<HTMLDivElement | null>,
   filename: string
 ) {
   const node = ref.current;
   if (!node) return;
 
-  // fonts
   await document.fonts.ready;
-
-  // ✅ clave en iOS: esperar que carguen los <img> del poster
   await waitForImages(node);
-
-  // mini delay para Safari (evita “snap” antes de pintar)
-  await new Promise((r) => setTimeout(r, 60));
+  await new Promise((r) => setTimeout(r, 80));
 
   const dataUrl = await htmlToImage.toPng(node, {
-    cacheBust: true,
     pixelRatio: 2,
     backgroundColor: "#000000",
   });
 
+  // convertir a blob
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  const file = new File([blob], filename, { type: "image/png" });
+
+  // 📱 iOS → Share Sheet
+  if (isIOS() && navigator.canShare?.({ files: [file] })) {
+    await navigator.share({
+      files: [file],
+      title: "Mi grilla Cosquín",
+      text: "Mi grilla de Cosquín Rock 🎸",
+    });
+    return;
+  }
+
+  // 💻 Desktop fallback → descarga
   const link = document.createElement("a");
-  link.download = filename;
   link.href = dataUrl;
+  link.download = filename;
   link.click();
 }
 
   async function shareDay1() {
-    await exportPNGFromRef(posterRefDay1, "cosquin-dia-1.png");
+    await exportAndShare(posterRefDay1, "cosquin-dia-1.png");
   }
   async function shareDay2() {
-    await exportPNGFromRef(posterRefDay2, "cosquin-dia-2.png");
+    await exportAndShare(posterRefDay2, "cosquin-dia-2.png");
   }
   async function shareAll() {
-    await exportPNGFromRef(posterRefAll, "cosquin-mi-grilla.png");
+    await exportAndShare(posterRefAll, "cosquin-mi-grilla.png");
   }
 
   function selectedSummaryForSlot(slot: Slot) {
@@ -390,94 +413,112 @@ async function exportPNGFromRef(
   );
 
   function addHours(time: string, hoursToAdd: number) {
-  const [hhStr, mmStr] = time.split(":");
-  let hh = Number(hhStr);
-  const mm = Number(mmStr);
+    const [hhStr, mmStr] = time.split(":");
+    let hh = Number(hhStr);
+    const mm = Number(mmStr);
 
-  hh = (hh + hoursToAdd) % 24;
-  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
-}
+    hh = (hh + hoursToAdd) % 24;
+    return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+  }
 
-function hourRangeLabel(hourKey: string) {
-  // "19:00" -> "19:00 - 20:00"
-  return `${hourKey} - ${addHours(hourKey, 1)}`;
-}
+  function hourRangeLabel(hourKey: string) {
+    return `${hourKey}`;
+  }
 
-async function fetchImageAsDataURL(src: string) {
-  const res = await fetch(src);
-  const blob = await res.blob();
+  async function fetchImageAsDataURL(src: string) {
+    const res = await fetch(src);
+    const blob = await res.blob();
 
-  return await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(String(reader.result));
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(String(reader.result));
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
 
-type PdfLine = {
-  stage: string;   // "Norte"
-  artist: string;  // "AIRBAG" | "Libre / descanso"
+  type PdfRow = {
+  time: string;   // "HH:MM"
+  stage: string;  // "Norte"
+  artist: string; // "AIRBAG" | "Libre / descanso"
 };
 
-type PdfHourBlock = {
-  time: string;     // "19:00"
-  lines: PdfLine[]; // 1..n
-};
+function hexToRgb(hex: string) {
+  const h = hex.replace("#", "").trim();
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const n = parseInt(full, 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
 
+function withAlphaOnWhite(rgb: { r: number; g: number; b: number }, alpha: number) {
+  // mezcla rgb con blanco => (1-a)*255 + a*rgb
+  const mix = (c: number) => Math.round((1 - alpha) * 255 + alpha * c);
+  return { r: mix(rgb.r), g: mix(rgb.g), b: mix(rgb.b) };
+}
 
-function buildBlocksForDay(dayKey: DayKey): PdfHourBlock[] {
+function buildRowsForDay(dayKey: DayKey): PdfRow[] {
   const daySel: Selection = allSelection[String(dayKey)] ?? {};
   const showsForDay = allShows.filter((s) => s.day === dayKey);
   const daySlots = groupByHour(showsForDay);
 
-  const blocks: PdfHourBlock[] = [];
+  const rows: PdfRow[] = [];
 
   for (const slot of daySlots) {
     const keys = daySel[slot.time] ?? [];
     if (keys.length === 0) continue;
 
-    // FREE = 1 sola línea
+    // si marcó FREE en ese bloque horario, lo ponemos como una fila
     if (keys.includes("FREE")) {
-      blocks.push({
+      rows.push({
         time: slot.time,
-        lines: [{ stage: "", artist: "Libre / descanso" }],
+        stage: "",
+        artist: "Libre / descanso",
       });
       continue;
     }
 
+    // filas por show (NO agrupado): si se repite hora, salen una abajo de otra
     const picked = slot.shows
       .filter((s) => keys.includes(showKey(s)))
-      .sort((a, b) => a.stage.localeCompare(b.stage, "es") || a.artist.localeCompare(b.artist, "es"));
+      .sort((a, b) => a.time.localeCompare(b.time) || a.stage.localeCompare(b.stage, "es"));
 
-    if (picked.length === 0) continue;
-
-    blocks.push({
-      time: slot.time,
-      lines: picked.map((s) => ({ stage: s.stage, artist: s.artist })),
-    });
+    for (const s of picked) {
+      rows.push({
+        time: s.time,
+        stage: s.stage,
+        artist: s.artist,
+      });
+    }
   }
 
-  // orden por hora
-  return blocks.sort((a, b) => timeToSortMinutes(a.time) - timeToSortMinutes(b.time));
+  // ✅ orden cronológico real (con after-midnight)
+  return rows.sort((a, b) => timeToSortMinutes(a.time) - timeToSortMinutes(b.time));
 }
 
 
 async function downloadPDFItinerary() {
+  const PDF_BG = "#193E85";
+
+function paintPageBackground() {
+  const { r, g, b } = hexToRgb(PDF_BG);
+  doc.setFillColor(r, g, b);
+  doc.rect(0, 0, PAGE_W, PAGE_H, "F"); // llena toda la hoja
+}
+
   const doc = new jsPDF({ unit: "pt", format: "a4" });
 
   const PAGE_W = doc.internal.pageSize.getWidth();
   const PAGE_H = doc.internal.pageSize.getHeight();
 
-  const M = 40;                 // margen
+  paintPageBackground();
+
+  const M = 40;
   const HEADER_H = 54;
-  const CARD_GAP = 10;
-  const CARD_PAD = 12;
+  const GAP = 10;
 
   const cardW = PAGE_W - M * 2;
-  const rowH = 54;              // alto de cada “casilla”
-  const titleSize = 18;
-  const textSize = 11;
+  const CARD_PAD_X = 14;
+  const CARD_PAD_Y = 12;
 
   // logo arriba derecha
   let logoDataUrl = "";
@@ -487,37 +528,34 @@ async function downloadPDFItinerary() {
     logoDataUrl = "";
   }
 
-  const dayBlocks: { day: DayKey; title: string; blocks: PdfHourBlock[] }[] = [
-  { day: 1, title: "DÍA 1 — 14 DE FEBRERO", blocks: buildBlocksForDay(1) },
-  { day: 2, title: "DÍA 2 — 15 DE FEBRERO", blocks: buildBlocksForDay(2) },
-];
+  const daySections: { title: string; rows: PdfRow[] }[] = [
+    { title: "DÍA 1 — 14 DE FEBRERO", rows: buildRowsForDay(1) },
+    { title: "DÍA 2 — 15 DE FEBRERO", rows: buildRowsForDay(2) }, // 👈 es 15 (tu data day2)
+  ];
 
   let y = M;
 
   function drawHeader() {
-    // titulo a la izquierda
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(titleSize);
+    doc.setFontSize(18);
     doc.setTextColor(20);
     doc.text("ITINERARIO COSQUÍN", M, y + 22);
 
-    // logo a la derecha
     if (logoDataUrl) {
-      // tamaño aprox
       const logoW = 120;
       const logoH = 24;
       doc.addImage(logoDataUrl, "PNG", PAGE_W - M - logoW, y, logoW, logoH);
     }
 
     y += HEADER_H;
-    // línea sutil
     doc.setDrawColor(220);
     doc.line(M, y, PAGE_W - M, y);
-    y += 16;
+    y += 14;
   }
 
   function newPage() {
     doc.addPage();
+    paintPageBackground();
     y = M;
     drawHeader();
   }
@@ -527,79 +565,109 @@ async function downloadPDFItinerary() {
   }
 
   function drawDayTitle(text: string) {
-    ensureSpace(40);
+    ensureSpace(48);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.setTextColor(20);
-    doc.text(text, M, y);
-    y += 14;
+    doc.text(text, M, y + 6);
+
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.setTextColor(90);
-    doc.text("Horario — Escenario — Artista", M, y + 10);
-    y += 24;
+    doc.setTextColor(110);
+    doc.text("Artista — Hora — Escenario", M, y + 22);
+
+    y += 34;
   }
 
-  function drawHourCard(block: PdfHourBlock) {
-  // altura dinámica: header + (líneas * lineHeight) + padding
-  const lineH = 18;
-  const headerH = 26;
-  const cardH = 18 + headerH + block.lines.length * lineH;
+  function getStageColors(stage: string) {
+    if (!stage) {
+      return {
+        border: { r: 210, g: 210, b: 210 },
+        bg: { r: 248, g: 248, b: 248 },
+        text: { r: 25, g: 25, b: 25 },
+        sub: { r: 90, g: 90, b: 90 },
+      };
+    }
 
-  ensureSpace(cardH + CARD_GAP);
+    const base = STAGE_PDF[stage]?.border ?? "#DD5227";
+    const border = hexToRgb(base);
+    const bg = withAlphaOnWhite(border, 0.12); // ~12% tint como “bg suave”
 
-  // caja
-  doc.setDrawColor(230);
-  doc.setFillColor(250, 250, 250);
-  doc.roundedRect(M, y, cardW, cardH, 10, 10, "FD");
+    return {
+      border,
+      bg,
+      text: { r: 18, g: 18, b: 18 },
+      sub: { r: 70, g: 70, b: 70 },
+    };
+  }
 
-  const leftX = M + CARD_PAD;
-  const rightX = M + cardW - CARD_PAD;
-
-  // horario (arriba)
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.setTextColor(25);
-  doc.text(hourRangeLabel(block.time), leftX, y + 22);
-
-  // líneas
-  let yy = y + 22 + 18;
-
-  for (const ln of block.lines) {
-    const stageText = ln.stage ? ln.stage : "—";
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-    doc.setTextColor(60);
-    doc.text(stageText, leftX, yy);
-
+  function drawRowCard(row: PdfRow) {
+    // altura dinámica (si el artista es largo, puede caer en 2 líneas)
+    const artistMaxW = cardW - CARD_PAD_X * 2;
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(20);
-    doc.text(ln.artist, rightX, yy, { align: "right" });
+    doc.setFontSize(12);
 
-    yy += lineH;
+    const artistLines = doc.splitTextToSize(row.artist.toUpperCase(), artistMaxW);
+    const artistLineH = 14;
+
+    const subLineH = 12;
+    const cardH =
+      CARD_PAD_Y +
+      artistLines.length * artistLineH +
+      6 +
+      subLineH +
+      CARD_PAD_Y;
+
+    ensureSpace(cardH + GAP);
+
+    const colors = getStageColors(row.stage);
+
+    // card
+    doc.setDrawColor(colors.border.r, colors.border.g, colors.border.b);
+    doc.setFillColor(colors.bg.r, colors.bg.g, colors.bg.b);
+    doc.roundedRect(M, y, cardW, cardH, 10, 10, "FD");
+
+    const x = M + CARD_PAD_X;
+    let yy = y + CARD_PAD_Y + 12;
+
+    // ARTISTA (bold)
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
+
+    for (const line of artistLines) {
+      doc.text(String(line), x, yy);
+      yy += artistLineH;
+    }
+
+    // sub: HORA • ESCENARIO
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(colors.sub.r, colors.sub.g, colors.sub.b);
+
+    const stageText = row.stage ? row.stage : "—";
+    doc.text(`${row.time}  •  ${stageText}`, x, yy + 2);
+
+    y += cardH + GAP;
   }
 
-  y += cardH + CARD_GAP;
-}
-
-  // primera página
+  // START
   drawHeader();
 
-  for (const block of dayBlocks) {
-    drawDayTitle(block.title);
+  for (const sec of daySections) {
+    drawDayTitle(sec.title);
 
-  if (block.blocks.length === 0) {
-  ensureSpace(60);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.setTextColor(90);
-  doc.text("No hay selecciones para este día.", M, y + 10);
-  y += 34;
-  continue;
-}
+    if (sec.rows.length === 0) {
+      ensureSpace(40);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(110);
+      doc.text("No hay selecciones para este día.", M, y + 10);
+      y += 28;
+      continue;
+    }
 
-for (const b of block.blocks) drawHourCard(b);
+    for (const r of sec.rows) drawRowCard(r);
   }
 
   doc.save("itinerario-cosquin.pdf");
@@ -615,27 +683,25 @@ for (const b of block.blocks) drawHourCard(b);
         backgroundPosition: "top center",
       }}
     >
-      {/* overlay negro para legibilidad */}
       <div className="pointer-events-none absolute inset-0 bg-black/45" />
 
       <div className="relative min-h-dvh">
-        {/* HEADER */}
         <header className="sticky top-0 z-40 mb-6 w-full">
           <div className="border-b border-white/10 bg-black/45 backdrop-blur">
             <div className="mx-auto flex h-[64px] max-w-6xl items-center justify-center px-4">
-              {/* 👇 achicado */}
-              <img src="/logoh.png" alt="Cosquín Rock" className="h-7 w-auto md:h-8" />
+              <img
+                src="/logoh.png"
+                alt="Cosquín Rock"
+                className="h-7 w-auto md:h-8"
+              />
             </div>
           </div>
         </header>
 
-        {/* CONTENT */}
         <main className="mx-auto max-w-4xl px-5 py-6">
           <div className="rounded-[32px] border border-white/10 bg-transparent p-4 backdrop-blur-md md:p-6">
-            {/* TITLE */}
             <div className="border-b border-white/10 pb-4">
               <div className="mx-auto flex max-w-6xl items-center justify-center">
-                {/* 👇 mejor para celu */}
                 <img
                   src="/titulo.png"
                   alt="Arma tu grilla"
@@ -644,7 +710,6 @@ for (const b of block.blocks) drawHourCard(b);
               </div>
             </div>
 
-            {/* TABS (más grandes, redondeados, meloriac, día1 naranja, día2 verde) */}
             <div className="mb-4 mt-6 flex justify-center gap-4 md:gap-6">
               <button
                 onClick={() => setDay(1)}
@@ -675,7 +740,6 @@ for (const b of block.blocks) drawHourCard(b);
               </button>
             </div>
 
-            {/* GRILLA */}
             <div className="mt-4 space-y-3">
               {slots.map((slot, index) => {
                 const picked = selectedSummaryForSlot(slot);
@@ -691,8 +755,8 @@ for (const b of block.blocks) drawHourCard(b);
                         className="text-[20px] leading-none tracking-wider md:text-[22px]"
                         style={{ fontFamily: "var(--font-circular)" }}
                       >
-                        {/* 👇 19:00 - 20:00 */}
-                        {slot.time}
+                        {/* ✅ ahora sí: 19:00 - 20:00 */}
+                        {hourRangeLabel(slot.time)}
                       </div>
 
                       <div className="flex flex-wrap justify-end gap-1">
@@ -705,7 +769,9 @@ for (const b of block.blocks) drawHourCard(b);
                             {picked.slice(0, 2).map((p, idx) => {
                               const chip =
                                 "rounded-full px-4 py-1 tracking-wider border border-white/10 " +
-                                (p.stage ? stageTheme(p.stage).chip : "bg-white/10 text-white");
+                                (p.stage
+                                  ? stageTheme(p.stage).chip
+                                  : "bg-white/10 text-white");
 
                               return (
                                 <span
@@ -745,54 +811,62 @@ for (const b of block.blocks) drawHourCard(b);
               })}
             </div>
 
-{/* INSTAGRAM INPUT */}
-<div className="mt-6">
-  <label
-    className="mb-2 block text-xs tracking-widest text-white/70 uppercase"
-    style={{ fontFamily: "var(--font-circular)" }}
-  >
-    Dejá tu Instagram
-  </label>
+            {/* INSTAGRAM INPUT */}
+            <div className="mt-6">
+              <label
+                className="mb-2 block text-xs tracking-widest text-white/70 uppercase"
+                style={{ fontFamily: "var(--font-circular)" }}
+              >
+                Dejá tu Instagram
+              </label>
 
-  <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-md">
-    <span
-      className="text-white/80"
-      style={{ fontFamily: "var(--font-circular)" }}
-    >
-      @
-    </span>
+              <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-md">
+                <span
+                  className="text-white/80"
+                  style={{ fontFamily: "var(--font-circular)" }}
+                >
+                  @
+                </span>
 
-    <input
-      value={instagram}
-      onChange={(e) => setInstagram(sanitizeInstagram(e.target.value))}
-      placeholder="tuinstagram"
-      className="w-full bg-transparent text-white outline-none placeholder:text-white/35"
-      style={{ fontFamily: "var(--font-circular)" }}
-      autoCapitalize="none"
-      autoCorrect="off"
-      spellCheck={false}
-      inputMode="text"
-      required
-    />
-  </div>
+                <input
+                  value={instagram}
+                  onChange={(e) =>
+                    setInstagram(sanitizeInstagram(e.target.value))
+                  }
+                  placeholder="tuinstagram"
+                  className="w-full bg-transparent text-white outline-none placeholder:text-white/35"
+                  style={{ fontFamily: "var(--font-circular)" }}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  inputMode="text"
+                  required
+                />
+              </div>
 
-  {!isInstagramValid && (
-    <div className="mt-2 text-xs text-white/60" style={{ fontFamily: "var(--font-circular)" }}>
-      Es obligatorio (sin @). Solo letras.
-    </div>
-  )}
-</div>
+              {!isInstagramValid && (
+                <div
+                  className="mt-2 text-xs text-white/60"
+                  style={{ fontFamily: "var(--font-circular)" }}
+                >
+                  Es obligatorio (sin @). Solo letras.
+                </div>
+              )}
+            </div>
 
-
-            {/* SHARE BUTTONS (día activo: día1 naranja / día2 verde; grilla siempre verde) */}
+            {/* SHARE BUTTONS */}
             <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-6 md:flex-row md:justify-center md:gap-6">
               <button
                 onClick={shareDay1}
                 disabled={shareDisabled}
-  className={[
-    "px-6 md:px-10 py-3 text-[14px] md:text-[16px] uppercase tracking-widest transition",
-    shareDisabled ? "opacity-40 cursor-not-allowed bg-white/10 text-white/70" : (day === 1 ? "bg-[#DD5227] text-white" : "bg-white/10 text-white/80 hover:bg-white/20"),
-  ].join(" ")}
+                className={[
+                  "px-6 md:px-10 py-3 text-[14px] md:text-[16px] uppercase tracking-widest transition",
+                  shareDisabled
+                    ? "opacity-40 cursor-not-allowed bg-white/10 text-white/70"
+                    : day === 1
+                    ? "bg-[#DD5227] text-white"
+                    : "bg-white/10 text-white/80 hover:bg-white/20",
+                ].join(" ")}
                 style={{ fontFamily: "var(--font-circular)" }}
               >
                 COMPARTIR DÍA 1
@@ -800,42 +874,54 @@ for (const b of block.blocks) drawHourCard(b);
 
               <button
                 onClick={shareDay2}
-               disabled={shareDisabled}
-  className={[
-    "px-6 md:px-10 py-3 text-[14px] md:text-[16px] uppercase tracking-widest transition",
-    shareDisabled ? "opacity-40 cursor-not-allowed bg-white/10 text-white/70" : (day === 2 ? "bg-[#0e7a4c] text-white" : "bg-white/10 text-white/80 hover:bg-white/20"),
-  ].join(" ")}                style={{ fontFamily: "var(--font-circular)" }}
+                disabled={shareDisabled}
+                className={[
+                  "px-6 md:px-10 py-3 text-[14px] md:text-[16px] uppercase tracking-widest transition",
+                  shareDisabled
+                    ? "opacity-40 cursor-not-allowed bg-white/10 text-white/70"
+                    : day === 2
+                    ? "bg-[#0e7a4c] text-white"
+                    : "bg-white/10 text-white/80 hover:bg-white/20",
+                ].join(" ")}
+                style={{ fontFamily: "var(--font-circular)" }}
               >
                 COMPARTIR DÍA 2
               </button>
 
               <button
                 onClick={shareAll}
-                  disabled={shareDisabled}  
-                className={["px-6 md:px-10 py-3 text-[14px] md:text-[16px] uppercase tracking-widest transition",
-    shareDisabled ? "opacity-40 cursor-not-allowed bg-white/10 text-white/70" : "bg-[#0e7a4c] text-white"
+                disabled={shareDisabled}
+                className={[
+                  "px-6 md:px-10 py-3 text-[14px] md:text-[16px] uppercase tracking-widest transition",
+                  shareDisabled
+                    ? "opacity-40 cursor-not-allowed bg-white/10 text-white/70"
+                    : "bg-[#0e7a4c] text-white",
                 ].join(" ")}
                 style={{ fontFamily: "var(--font-circular)" }}
               >
                 COMPARTIR MI GRILLA
               </button>
             </div>
-              <button
-  onClick={downloadPDFItinerary}
-  className={[
-    "px-6 md:px-10",
-    "py-3",
-    "text-[14px] md:text-[16px]",
-    "uppercase tracking-widest",
-    "transition",
-    "bg-white text-black hover:opacity-90",
-  ].join(" ")}
-  style={{ fontFamily: "var(--font-circular)" }}
->
-  DESCARGAR PDF
-</button>
 
-            {/* LIMPIAR DÍA ABAJO DE TODO */}
+            {/* PDF */}
+            <div className="mt-3 flex justify-center">
+              <button
+                onClick={downloadPDFItinerary}
+                className={[
+                  "px-6 md:px-10",
+                  "py-3",
+                  "text-[14px] md:text-[16px]",
+                  "uppercase tracking-widest",
+                  "transition",
+                  "bg-white text-black hover:opacity-90",
+                ].join(" ")}
+                style={{ fontFamily: "var(--font-circular)" }}
+              >
+                DESCARGAR PDF
+              </button>
+            </div>
+
+            {/* LIMPIAR DÍA */}
             <div className="mt-6 flex justify-center">
               <button
                 onClick={clearDay}
@@ -847,18 +933,30 @@ for (const b of block.blocks) drawHourCard(b);
             </div>
           </div>
 
-          {/* POSTERS OCULTOS (para exportar PNG) */}
+          {/* POSTERS OCULTOS */}
           <div className="fixed -left-[99999px] top-0">
             <div ref={posterRefDay1}>
-              <ExportPoster variant="day1" selectedShows={selectedShowsDay1} instagram={instagram} />
+              <ExportPoster
+                variant="day1"
+                selectedShows={selectedShowsDay1}
+                instagram={instagram}
+              />
             </div>
 
             <div ref={posterRefDay2}>
-              <ExportPoster variant="day2" selectedShows={selectedShowsDay2} instagram={instagram}   />
+              <ExportPoster
+                variant="day2"
+                selectedShows={selectedShowsDay2}
+                instagram={instagram}
+              />
             </div>
 
             <div ref={posterRefAll}>
-              <ExportPoster variant="all" selectedShows={selectedShowsAll} instagram={instagram} />
+              <ExportPoster
+                variant="all"
+                selectedShows={selectedShowsAll}
+                instagram={instagram}
+              />
             </div>
           </div>
         </main>
@@ -881,11 +979,9 @@ for (const b of block.blocks) drawHourCard(b);
                   backgroundSize: "960px 960px",
                 }}
               >
-                {/* overlay negro modal */}
                 <div className="pointer-events-none absolute inset-0 rounded-3xl bg-black/55" />
 
                 <div className="relative rounded-3xl border border-white/10 bg-black/20 backdrop-blur-md">
-                  {/* Header */}
                   <div className="flex items-center justify-between border-b border-white/10 bg-black/20 px-5 py-4 backdrop-blur-md">
                     <div>
                       <div
@@ -895,7 +991,6 @@ for (const b of block.blocks) drawHourCard(b);
                         Elegir para
                       </div>
 
-                      {/* 👇 horario más grande + formato 19:00 - 20:00 */}
                       <div
                         className="text-[34px] leading-none tracking-widest text-white md:text-[44px]"
                         style={{ fontFamily: "var(--font-circular)" }}
@@ -913,10 +1008,8 @@ for (const b of block.blocks) drawHourCard(b);
                     </button>
                   </div>
 
-                  {/* Body */}
                   <div className="max-h-[75vh] overflow-y-auto px-5 py-4">
                     <div className="space-y-3">
-                      {/* FREE (neutral) — sin “OPCIÓN” */}
                       <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/15 bg-white/10 p-4 transition hover:bg-white/15">
                         <div className="flex items-center gap-3">
                           <div className="flex flex-col">
@@ -946,7 +1039,6 @@ for (const b of block.blocks) drawHourCard(b);
                         </div>
                       </label>
 
-                      {/* shows (color sólido por escenario + chip del escenario + artista) */}
                       {openSlot.shows.map((s) => {
                         const key = showKey(s);
                         const checked = (selection[openSlot.time] ?? []).includes(key);
@@ -1012,7 +1104,6 @@ for (const b of block.blocks) drawHourCard(b);
           </div>
         )}
 
-        {/* FOOTER */}
         <footer className="mt-12 mb-6 text-center text-sm tracking-wide text-white/70">
           © 2024 Cosquín Rock. Todos los derechos reservados.
         </footer>
