@@ -14,7 +14,7 @@ export type PosterVariant = "day1" | "day2" | "all";
 type Props = {
   variant: PosterVariant;
   selectedShows: Show[];
-  instagram?: string; // opcional
+  instagram?: string;
 };
 
 function getArtistStyle(name: string) {
@@ -36,14 +36,12 @@ function uniqueArtists(shows: Show[]) {
 }
 
 function bgForVariant(variant: PosterVariant) {
-  // ✅ estos 3 fondos van en /public con estos nombres exactos
   if (variant === "day1") return "/MI GRILLA 14 DE FEB.png";
   if (variant === "day2") return "/MI GRILLA 15 DE FEB.png";
   return "/MI GRILLA GLOBAL.png";
 }
 
 function fontSizeForCount(n: number) {
-  // ✅ bastante grande para ocupar el centro y leerse bien
   if (n <= 8) return 90;
   if (n <= 10) return 82;
   if (n <= 14) return 70;
@@ -53,20 +51,15 @@ function fontSizeForCount(n: number) {
   return 42;
 }
 
-export default function ExportPoster({
-  variant,
-  selectedShows,
-  instagram,
-}: Props) {
-  const bg = bgForVariant(variant);
-
+export default function ExportPoster({ variant, selectedShows, instagram }: Props) {
   const artists = useMemo(() => {
     return uniqueArtists(selectedShows).sort((a, b) => a.localeCompare(b, "es"));
   }, [selectedShows]);
 
   const fs = fontSizeForCount(artists.length);
+  const bg = bgForVariant(variant);
 
-  const ig = (instagram ?? "").replace(/@/g, "").trim(); // ✅ safe
+  const ig = (instagram ?? "").replace(/@/g, "").trim(); // safe
 
   return (
     <div
@@ -75,14 +68,13 @@ export default function ExportPoster({
         width: 1080,
         height: 1920,
         overflow: "hidden",
-        backgroundColor: "#000", // fallback
+        backgroundColor: "#000",
       }}
     >
-      {/* ✅ Fondo como IMG (Safari lo renderiza bien) */}
+      {/* ✅ Fondo como IMG (soluciona Safari/iOS + html-to-image) */}
       <img
         src={bg}
         alt=""
-        crossOrigin="anonymous"
         className="absolute inset-0 h-full w-full object-cover"
         draggable={false}
       />
@@ -98,7 +90,7 @@ export default function ExportPoster({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          zIndex: 10,
+          zIndex: 2,
         }}
       >
         {artists.length === 0 ? (
@@ -120,6 +112,8 @@ export default function ExportPoster({
             style={{
               textAlign: "center",
               maxWidth: "92%",
+              // ✅ importante: NO usar gap/rowGap en iOS export
+              // ✅ y NO usar flex-wrap en el contenedor; dejamos inline-block en spans
             }}
           >
             {artists.map((name) => {
@@ -136,9 +130,10 @@ export default function ExportPoster({
                     letterSpacing: "0.04em",
                     textTransform: "uppercase",
                     textShadow: "0 2px 18px rgba(0,0,0,0.45)",
-                    display: "inline-block", // ✅ iOS safe
-                    margin: "0 14px 18px", // ✅ reemplaza gap/rowGap
+
+                    display: "inline-block",
                     whiteSpace: "nowrap",
+                    margin: "0 14px 18px",
                   }}
                 >
                   {name}
@@ -149,7 +144,7 @@ export default function ExportPoster({
         )}
       </div>
 
-      {/* IG ABAJO (en el margen del rectángulo) */}
+      {/* IG ABAJO */}
       {ig.length > 0 && (
         <div
           className="absolute left-0 right-0 text-center"
@@ -161,7 +156,7 @@ export default function ExportPoster({
             textTransform: "uppercase",
             color: "rgba(255,255,255,0.85)",
             textShadow: "0 3px 18px rgba(0,0,0,0.55)",
-            zIndex: 10,
+            zIndex: 2,
           }}
         >
           @{ig}
