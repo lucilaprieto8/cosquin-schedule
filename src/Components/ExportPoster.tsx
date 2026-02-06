@@ -65,18 +65,23 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
   const fs = fontSizeForCount(artists.length);
 
   return (
-    <div
-      className="relative text-white"
-      style={{
-        width: 1080,
-        height: 1920,
-        backgroundImage: `url('${bgForVariant(variant)}')`,
-        backgroundRepeat: "no-repeat",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        overflow: "hidden",
-      }}
-    >
+   <div
+    className="relative text-white"
+    style={{
+      width: 1080,
+      height: 1920,
+
+      // 👇 FONDO CORRECTO PARA EXPORT (mobile-safe)
+      backgroundImage: `url(${bgForVariant(variant)})`,
+      backgroundRepeat: "no-repeat",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+
+      // 👇 MUY IMPORTANTE PARA iOS
+      backgroundColor: "#000000",
+    }}
+  >
+    <div className="relative z-10">
       {/* ZONA ARTISTAS: centrada y ocupando ~70% */}
       <div
         className="absolute left-0 right-0"
@@ -138,6 +143,7 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
             })}
           </div>
         )}
+      </div>
       </div>
       {/* IG ABAJO (en el margen del rectángulo) */}
 {instagram?.trim() && (

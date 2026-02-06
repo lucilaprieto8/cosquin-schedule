@@ -5,6 +5,7 @@ import * as htmlToImage from "html-to-image";
 import day1 from "@/src/data/day1.json";
 import day2 from "@/src/data/day2.json";
 import ExportPoster from "@/src/Components/ExportPoster";
+import { jsPDF } from "jspdf";
 
 type Show = {
   day: 1 | 2;
@@ -301,25 +302,38 @@ const shareDisabled = !isInstagramValid;
     return [...selectedShowsDay1, ...selectedShowsDay2];
   }, [selectedShowsDay1, selectedShowsDay2]);
 
-  async function exportPNGFromRef(
-    ref: React.RefObject<HTMLDivElement | null>,
-    filename: string
-  ) {
-    if (!ref.current) return;
+  async function waitForImages(el: HTMLElement) {
+  const imgs = Array.from(el.querySelectorAll("img"));
+  await Promise.all(
+    imgs.map(
+      (img) =>
+        img.complete
+          ? Promise.resolve()
+          : new Promise<void>((res, rej) => {
+              img.onload = () => res();
+              img.onerror = () => res(); // no bloquees si falla
+            })
+    )
+  );
+}
 
-    await document.fonts.ready;
+async function exportPNGFromRef(ref: React.RefObject<HTMLDivElement | null>, filename: string) {
+  if (!ref.current) return;
 
-    const dataUrl = await htmlToImage.toPng(ref.current, {
-      cacheBust: true,
-      pixelRatio: 2,
-      backgroundColor: "#0b0b10",
-    });
+  await document.fonts.ready;
+  await waitForImages(ref.current); // 👈 clave
 
-    const link = document.createElement("a");
-    link.download = filename;
-    link.href = dataUrl;
-    link.click();
-  }
+  const dataUrl = await htmlToImage.toPng(ref.current, {
+    cacheBust: true,
+    pixelRatio: 2,
+    backgroundColor: "#000000",
+  });
+
+  const link = document.createElement("a");
+  link.download = filename;
+  link.href = dataUrl;
+  link.click();
+}
 
   async function shareDay1() {
     await exportPNGFromRef(posterRefDay1, "cosquin-dia-1.png");
@@ -343,6 +357,222 @@ const shareDisabled = !isInstagramValid;
     () => slots.find((s) => s.time === openTime) ?? null,
     [slots, openTime]
   );
+
+  function addHours(time: string, hoursToAdd: number) {
+  const [hhStr, mmStr] = time.split(":");
+  let hh = Number(hhStr);
+  const mm = Number(mmStr);
+
+  hh = (hh + hoursToAdd) % 24;
+  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+}
+
+function hourRangeLabel(hourKey: string) {
+  // "19:00" -> "19:00 - 20:00"
+  return `${hourKey} - ${addHours(hourKey, 1)}`;
+}
+
+async function fetchImageAsDataURL(src: string) {
+  const res = await fetch(src);
+  const blob = await res.blob();
+
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(String(reader.result));
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+type PdfLine = {
+  stage: string;   // "Norte"
+  artist: string;  // "AIRBAG" | "Libre / descanso"
+};
+
+type PdfHourBlock = {
+  time: string;     // "19:00"
+  lines: PdfLine[]; // 1..n
+};
+
+
+function buildBlocksForDay(dayKey: DayKey): PdfHourBlock[] {
+  const daySel: Selection = allSelection[String(dayKey)] ?? {};
+  const showsForDay = allShows.filter((s) => s.day === dayKey);
+  const daySlots = groupByHour(showsForDay);
+
+  const blocks: PdfHourBlock[] = [];
+
+  for (const slot of daySlots) {
+    const keys = daySel[slot.time] ?? [];
+    if (keys.length === 0) continue;
+
+    // FREE = 1 sola línea
+    if (keys.includes("FREE")) {
+      blocks.push({
+        time: slot.time,
+        lines: [{ stage: "", artist: "Libre / descanso" }],
+      });
+      continue;
+    }
+
+    const picked = slot.shows
+      .filter((s) => keys.includes(showKey(s)))
+      .sort((a, b) => a.stage.localeCompare(b.stage, "es") || a.artist.localeCompare(b.artist, "es"));
+
+    if (picked.length === 0) continue;
+
+    blocks.push({
+      time: slot.time,
+      lines: picked.map((s) => ({ stage: s.stage, artist: s.artist })),
+    });
+  }
+
+  // orden por hora
+  return blocks.sort((a, b) => timeToSortMinutes(a.time) - timeToSortMinutes(b.time));
+}
+
+
+async function downloadPDFItinerary() {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+
+  const PAGE_W = doc.internal.pageSize.getWidth();
+  const PAGE_H = doc.internal.pageSize.getHeight();
+
+  const M = 40;                 // margen
+  const HEADER_H = 54;
+  const CARD_GAP = 10;
+  const CARD_PAD = 12;
+
+  const cardW = PAGE_W - M * 2;
+  const rowH = 54;              // alto de cada “casilla”
+  const titleSize = 18;
+  const textSize = 11;
+
+  // logo arriba derecha
+  let logoDataUrl = "";
+  try {
+    logoDataUrl = await fetchImageAsDataURL("/logoh.png");
+  } catch {
+    logoDataUrl = "";
+  }
+
+  const dayBlocks: { day: DayKey; title: string; blocks: PdfHourBlock[] }[] = [
+  { day: 1, title: "DÍA 1 — 14 DE FEBRERO", blocks: buildBlocksForDay(1) },
+  { day: 2, title: "DÍA 2 — 15 DE FEBRERO", blocks: buildBlocksForDay(2) },
+];
+
+  let y = M;
+
+  function drawHeader() {
+    // titulo a la izquierda
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(titleSize);
+    doc.setTextColor(20);
+    doc.text("ITINERARIO COSQUÍN", M, y + 22);
+
+    // logo a la derecha
+    if (logoDataUrl) {
+      // tamaño aprox
+      const logoW = 120;
+      const logoH = 24;
+      doc.addImage(logoDataUrl, "PNG", PAGE_W - M - logoW, y, logoW, logoH);
+    }
+
+    y += HEADER_H;
+    // línea sutil
+    doc.setDrawColor(220);
+    doc.line(M, y, PAGE_W - M, y);
+    y += 16;
+  }
+
+  function newPage() {
+    doc.addPage();
+    y = M;
+    drawHeader();
+  }
+
+  function ensureSpace(needed: number) {
+    if (y + needed > PAGE_H - M) newPage();
+  }
+
+  function drawDayTitle(text: string) {
+    ensureSpace(40);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(20);
+    doc.text(text, M, y);
+    y += 14;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(90);
+    doc.text("Horario — Escenario — Artista", M, y + 10);
+    y += 24;
+  }
+
+  function drawHourCard(block: PdfHourBlock) {
+  // altura dinámica: header + (líneas * lineHeight) + padding
+  const lineH = 18;
+  const headerH = 26;
+  const cardH = 18 + headerH + block.lines.length * lineH;
+
+  ensureSpace(cardH + CARD_GAP);
+
+  // caja
+  doc.setDrawColor(230);
+  doc.setFillColor(250, 250, 250);
+  doc.roundedRect(M, y, cardW, cardH, 10, 10, "FD");
+
+  const leftX = M + CARD_PAD;
+  const rightX = M + cardW - CARD_PAD;
+
+  // horario (arriba)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(25);
+  doc.text(hourRangeLabel(block.time), leftX, y + 22);
+
+  // líneas
+  let yy = y + 22 + 18;
+
+  for (const ln of block.lines) {
+    const stageText = ln.stage ? ln.stage : "—";
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(60);
+    doc.text(stageText, leftX, yy);
+
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(20);
+    doc.text(ln.artist, rightX, yy, { align: "right" });
+
+    yy += lineH;
+  }
+
+  y += cardH + CARD_GAP;
+}
+
+  // primera página
+  drawHeader();
+
+  for (const block of dayBlocks) {
+    drawDayTitle(block.title);
+
+  if (block.blocks.length === 0) {
+  ensureSpace(60);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.setTextColor(90);
+  doc.text("No hay selecciones para este día.", M, y + 10);
+  y += 34;
+  continue;
+}
+
+for (const b of block.blocks) drawHourCard(b);
+  }
+
+  doc.save("itinerario-cosquin.pdf");
+}
 
   return (
     <div
@@ -431,7 +661,7 @@ const shareDisabled = !isInstagramValid;
                         style={{ fontFamily: "var(--font-circular)" }}
                       >
                         {/* 👇 19:00 - 20:00 */}
-                        {slot.time} – {addOneHour(slot.time)}
+                        {slot.time}
                       </div>
 
                       <div className="flex flex-wrap justify-end gap-1">
@@ -559,6 +789,20 @@ const shareDisabled = !isInstagramValid;
                 COMPARTIR MI GRILLA
               </button>
             </div>
+              <button
+  onClick={downloadPDFItinerary}
+  className={[
+    "px-6 md:px-10",
+    "py-3",
+    "text-[14px] md:text-[16px]",
+    "uppercase tracking-widest",
+    "transition",
+    "bg-white text-black hover:opacity-90",
+  ].join(" ")}
+  style={{ fontFamily: "var(--font-circular)" }}
+>
+  DESCARGAR PDF
+</button>
 
             {/* LIMPIAR DÍA ABAJO DE TODO */}
             <div className="mt-6 flex justify-center">
