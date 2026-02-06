@@ -53,12 +53,20 @@ function fontSizeForCount(n: number) {
   return 42;
 }
 
-export default function ExportPoster({ variant, selectedShows, instagram = "" }: Props) {
+export default function ExportPoster({
+  variant,
+  selectedShows,
+  instagram,
+}: Props) {
+  const bg = bgForVariant(variant);
+
   const artists = useMemo(() => {
     return uniqueArtists(selectedShows).sort((a, b) => a.localeCompare(b, "es"));
   }, [selectedShows]);
 
   const fs = fontSizeForCount(artists.length);
+
+  const ig = (instagram ?? "").replace(/@/g, "").trim(); // ✅ safe
 
   return (
     <div
@@ -66,14 +74,20 @@ export default function ExportPoster({ variant, selectedShows, instagram = "" }:
       style={{
         width: 1080,
         height: 1920,
-        backgroundImage: `url('${bgForVariant(variant)}')`,
-        backgroundRepeat: "no-repeat",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
         overflow: "hidden",
+        backgroundColor: "#000", // fallback
       }}
     >
-      {/* ZONA ARTISTAS (sin flex-wrap para que iOS Safari no superponga al exportar) */}
+      {/* ✅ Fondo como IMG (Safari lo renderiza bien) */}
+      <img
+        src={bg}
+        alt=""
+        crossOrigin="anonymous"
+        className="absolute inset-0 h-full w-full object-cover"
+        draggable={false}
+      />
+
+      {/* ZONA ARTISTAS */}
       <div
         className="absolute left-0 right-0"
         style={{
@@ -84,6 +98,7 @@ export default function ExportPoster({ variant, selectedShows, instagram = "" }:
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          zIndex: 10,
         }}
       >
         {artists.length === 0 ? (
@@ -121,9 +136,8 @@ export default function ExportPoster({ variant, selectedShows, instagram = "" }:
                     letterSpacing: "0.04em",
                     textTransform: "uppercase",
                     textShadow: "0 2px 18px rgba(0,0,0,0.45)",
-
                     display: "inline-block", // ✅ iOS safe
-                    margin: "0 14px 18px",   // ✅ reemplaza gap/rowGap
+                    margin: "0 14px 18px", // ✅ reemplaza gap/rowGap
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -136,7 +150,7 @@ export default function ExportPoster({ variant, selectedShows, instagram = "" }:
       </div>
 
       {/* IG ABAJO (en el margen del rectángulo) */}
-      {instagram.trim() && (
+      {ig.length > 0 && (
         <div
           className="absolute left-0 right-0 text-center"
           style={{
@@ -147,9 +161,10 @@ export default function ExportPoster({ variant, selectedShows, instagram = "" }:
             textTransform: "uppercase",
             color: "rgba(255,255,255,0.85)",
             textShadow: "0 3px 18px rgba(0,0,0,0.55)",
+            zIndex: 10,
           }}
         >
-          @{instagram.replace(/@/g, "")}
+          @{ig}
         </div>
       )}
     </div>

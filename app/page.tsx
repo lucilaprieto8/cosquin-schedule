@@ -97,6 +97,24 @@ function saveSelection(all: Record<string, Selection>) {
  * Colores (los afinamos con el manual cuando quieras).
  * Acá los dejo sólidos para que se distingan.
  */
+const STAGE_PDF: Record<
+  string,
+  { border: string; bg: string }
+> = {
+  Norte: { border: "#DD5227", bg: "rgba(221,82,39,0.10)" },
+  Sur: { border: "#DD5227", bg: "rgba(221,82,39,0.10)" },
+
+  Boomerang: { border: "#7CFF5B", bg: "rgba(124,255,91,0.10)" },
+  Montaña: { border: "#1AD6FF", bg: "rgba(26,214,255,0.10)" },
+  "La Casita del Blues": { border: "#B46CFF", bg: "rgba(180,108,255,0.10)" },
+  Electronic: { border: "#FF4D4D", bg: "rgba(255,77,77,0.10)" },
+  "La Plaza Electronic Stage": { border: "#FF4D4D", bg: "rgba(255,77,77,0.10)" },
+
+  Paraguay: { border: "#FFA800", bg: "rgba(255,168,0,0.10)" },
+  Sorpresa: { border: "#FFA800", bg: "rgba(255,168,0,0.10)" },
+};
+
+
 const STAGE_THEME: Record<
   string,
   {
