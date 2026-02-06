@@ -248,12 +248,15 @@ export default function Page() {
   );
   const selection: Selection = allSelection[String(day)] ?? {};
 
-  function sanitizeInstagram(raw: string) {
-    // ✅ no deja arroba y deja SOLO letras
-    return raw.replace(/@/g, "").replace(/[^a-zA-Z]/g, "").slice(0, 30);
-  }
+function sanitizeInstagram(raw: string) {
+  // sin @, permite letras, números, . y _
+  return raw
+    .replace(/@/g, "")
+    .replace(/[^a-zA-Z0-9._]/g, "")
+    .slice(0, 30);
+}
 
-  const isInstagramValid = instagram.trim().length >= 2;
+  const isInstagramValid = instagram.trim().length >= 4;
   const shareDisabled = !isInstagramValid;
 
   useEffect(() => {
@@ -732,7 +735,7 @@ function paintPageBackground() {
                 <img
                   src="/titulo.png"
                   alt="Arma tu grilla"
-                  className="h-[44px] w-auto md:h-[56px]"
+                  className="h-[94px] w-auto md:h-[150px]"
                 />
               </div>
             </div>
@@ -793,7 +796,7 @@ function paintPageBackground() {
                           </span>
                         ) : (
                           <>
-                            {picked.slice(0, 2).map((p, idx) => {
+                            {picked.slice().map((p, idx) => {
                               const chip =
                                 "rounded-full px-4 py-1 tracking-wider border border-white/10 " +
                                 (p.stage
@@ -813,18 +816,6 @@ function paintPageBackground() {
                                 </span>
                               );
                             })}
-
-                            {picked.length > 2 && (
-                              <span
-                                className="rounded-full border border-white/10 bg-white/10 px-4 py-1 tracking-wider text-white"
-                                style={{
-                                  fontFamily: "var(--font-meloriac)",
-                                  fontSize: "12px",
-                                }}
-                              >
-                                +{picked.length - 2}
-                              </span>
-                            )}
                           </>
                         )}
                       </div>
@@ -837,49 +828,58 @@ function paintPageBackground() {
                 );
               })}
             </div>
-
-            {/* INSTAGRAM INPUT */}
-            <div className="mt-6">
-              <label
-                className="mb-2 block text-xs tracking-widest text-white/70 uppercase"
+            {/* LIMPIAR DÍA */}
+            <div className="mt-4 flex align-right justify-end">
+              <button
+                onClick={clearDay}
+                className="rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs tracking-widest text-white hover:bg-white/20 transition"
                 style={{ fontFamily: "var(--font-circular)" }}
               >
-                Dejá tu Instagram
-              </label>
-
-              <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-md">
-                <span
-                  className="text-white/80"
-                  style={{ fontFamily: "var(--font-circular)" }}
-                >
-                  @
-                </span>
-
-                <input
-                  value={instagram}
-                  onChange={(e) =>
-                    setInstagram(sanitizeInstagram(e.target.value))
-                  }
-                  placeholder="tuinstagram"
-                  className="w-full bg-transparent text-white outline-none placeholder:text-white/35"
-                  style={{ fontFamily: "var(--font-circular)" }}
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  inputMode="text"
-                  required
-                />
-              </div>
-
-              {!isInstagramValid && (
-                <div
-                  className="mt-2 text-xs text-white/60"
-                  style={{ fontFamily: "var(--font-circular)" }}
-                >
-                  Es obligatorio (sin @). Solo letras.
-                </div>
-              )}
+                LIMPIAR DÍA
+              </button>
             </div>
+
+            {/* INSTAGRAM INPUT */}
+<div className="mt-6">
+  <label
+    className="mb-2 block text-xs tracking-widest uppercase text-white/70"
+    style={{ fontFamily: "var(--font-circular)" }}
+  >
+    Dejá tu Instagram{" "}
+    <span className="text-red-500">*</span>
+  </label>
+
+  <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-md">
+    <span
+      className="text-white/80"
+      style={{ fontFamily: "var(--font-circular)" }}
+    >
+      @
+    </span>
+
+    <input
+      value={instagram}
+      onChange={(e) => setInstagram(sanitizeInstagram(e.target.value))}
+      placeholder="tu.instagram_123"
+      className="w-full bg-transparent text-white outline-none placeholder:text-white/35"
+      style={{ fontFamily: "var(--font-circular)" }}
+      autoCapitalize="none"
+      autoCorrect="off"
+      spellCheck={false}
+      inputMode="text"
+      required
+    />
+  </div>
+
+  {!isInstagramValid && (
+    <div
+      className="mt-2 text-xs text-red-400 tracking-wide"
+      style={{ fontFamily: "var(--font-circular)" }}
+    >
+      Obligatorio. Mínimo 4 caracteres.
+    </div>
+  )}
+</div>
 
             {/* SHARE BUTTONS */}
             <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-6 md:flex-row md:justify-center md:gap-6">
@@ -922,7 +922,7 @@ function paintPageBackground() {
                   "px-6 md:px-10 py-3 text-[14px] md:text-[16px] uppercase tracking-widest transition",
                   shareDisabled
                     ? "opacity-40 cursor-not-allowed bg-white/10 text-white/70"
-                    : "bg-[#0e7a4c] text-white",
+                    : "bg-[#A571CF] text-white",
                 ].join(" ")}
                 style={{ fontFamily: "var(--font-circular)" }}
               >
@@ -948,16 +948,6 @@ function paintPageBackground() {
               </button>
             </div>
 
-            {/* LIMPIAR DÍA */}
-            <div className="mt-6 flex justify-center">
-              <button
-                onClick={clearDay}
-                className="rounded-full border border-white/20 bg-white/10 px-6 py-3 text-xs tracking-widest text-white hover:bg-white/20 transition"
-                style={{ fontFamily: "var(--font-circular)" }}
-              >
-                LIMPIAR DÍA
-              </button>
-            </div>
           </div>
 
           {/* POSTERS OCULTOS */}
@@ -1000,7 +990,7 @@ function paintPageBackground() {
 
             <div className="absolute inset-0 flex items-center justify-center px-4 py-6">
               <div
-                className="relative w-full max-w-4xl rounded-3xl border border-white/15 shadow-2xl"
+                className="relative w-full max-w-4xl rounded-3xl border border-black shadow-2xl"
                 style={{
                   backgroundImage: "url('/bg/cr-background.png')",
                   backgroundRepeat: "repeat",
@@ -1045,7 +1035,7 @@ function paintPageBackground() {
                               className="text-[16px] tracking-wide text-white"
                               style={{ fontFamily: "var(--font-circular)" }}
                             >
-                              Libre / descanso
+                              Libre
                             </span>
                             <span className="text-xs text-white/60 tracking-wide">
                               (si lo marcás, se limpian las otras opciones)
@@ -1061,7 +1051,7 @@ function paintPageBackground() {
                             onChange={() => toggleOption(openSlot.time, "FREE")}
                           />
                           <div className="h-7 w-7 rounded-md border border-white/20 bg-white/10 peer-checked:border-[#DD5227] peer-checked:bg-[#DD5227]" />
-                          <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white opacity-0 peer-checked:opacity-100">
+                          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[#DD5227] text-white opacity-0 peer-checked:opacity-100">
                             ✓
                           </div>
                         </div>
@@ -1113,7 +1103,7 @@ function paintPageBackground() {
                                   th.checkOn,
                                 ].join(" ")}
                               />
-                              <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white opacity-0 peer-checked:opacity-100">
+                              <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[#DD5227] text-white opacity-0 peer-checked:opacity-100">
                                 ✓
                               </div>
                             </div>
