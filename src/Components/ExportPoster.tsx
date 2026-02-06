@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { ARTIST_STYLES } from "@/src/data/artistStyle";
-import bg14 from "@/public/mi-grilla-14-feb.png";
-import bg15 from "@/public/mi-grilla-15-feb.png";
+import bg14 from "@/public/mi-grilla-14.png";
+import bg15 from "@/public/mi-grilla-15.png";
 import bgAll from "@/public/mi-grilla-global.png";
 
 function bgForVariant(variant: PosterVariant) {
