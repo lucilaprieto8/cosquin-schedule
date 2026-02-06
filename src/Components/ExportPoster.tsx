@@ -36,9 +36,9 @@ function uniqueArtists(shows: Show[]) {
 }
 
 function bgForVariant(variant: PosterVariant) {
-  if (variant === "day1") return "/MI GRILLA 14 DE FEB.png";
-  if (variant === "day2") return "/MI GRILLA 15 DE FEB.png";
-  return "/MI GRILLA GLOBAL.png";
+  if (variant === "day1") return "/mi-grilla-14.png";
+  if (variant === "day2") return "/mi-grilla-15.png";
+  return "/mi-grilla-global.png";
 }
 
 function fontSizeForCount(n: number) {
