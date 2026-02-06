@@ -6,6 +6,7 @@ import day1 from "@/src/data/day1.json";
 import day2 from "@/src/data/day2.json";
 import ExportPoster from "@/src/Components/ExportPoster";
 import { jsPDF } from "jspdf";
+import { transform } from "next/dist/build/swc/generated-native";
 
 
 type Show = {
@@ -351,53 +352,67 @@ export default function Page() {
     );
   }
 
-  async function exportAndShare(
+async function exportAndShare(
   ref: React.RefObject<HTMLDivElement | null>,
   filename: string
 ) {
   const node = ref.current;
   if (!node) return;
 
+  // 1) Esperar fonts
   await document.fonts.ready;
+
+  // 2) Esperar imágenes del poster
   await waitForImages(node);
+
+  // 3) Embebido de fonts (CLAVE para iOS + html-to-image)
+  const fontCSS = await htmlToImage.getFontEmbedCSS(node);
+
+  // mini delay para Safari
   await new Promise((r) => setTimeout(r, 80));
 
+  // 4) Export PNG
   const dataUrl = await htmlToImage.toPng(node, {
     pixelRatio: 2,
     backgroundColor: "#000000",
+    cacheBust: true,
+    fontEmbedCSS: fontCSS,
   });
 
-  // convertir a blob
-  const res = await fetch(dataUrl);
-  const blob = await res.blob();
+  // 5) DataURL -> Blob (sin fetch, más estable en iOS)
+  const blob = await (await fetch(dataUrl)).blob();
   const file = new File([blob], filename, { type: "image/png" });
 
-  // 📱 iOS → Share Sheet
-  if (isIOS() && navigator.canShare?.({ files: [file] })) {
-    await navigator.share({
-      files: [file],
-      title: "Mi grilla Cosquín",
-      text: "Mi grilla de Cosquín Rock 🎸",
-    });
-    return;
+  // 📱 iOS → Share Sheet (con fallback si falla)
+  try {
+    if (isIOS() && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: "Mi grilla Cosquín",
+        text: "Mi grilla de Cosquín Rock 🎸",
+      });
+      return;
+    }
+  } catch {
+    // si el share falla, seguimos al download
   }
 
-  // 💻 Desktop fallback → descarga
+  // 💻/📱 fallback → descarga
   const link = document.createElement("a");
   link.href = dataUrl;
   link.download = filename;
   link.click();
 }
 
-  async function shareDay1() {
-    await exportAndShare(posterRefDay1, "cosquin-dia-1.png");
-  }
-  async function shareDay2() {
-    await exportAndShare(posterRefDay2, "cosquin-dia-2.png");
-  }
-  async function shareAll() {
-    await exportAndShare(posterRefAll, "cosquin-mi-grilla.png");
-  }
+async function shareDay1() {
+  await exportAndShare(posterRefDay1, "cosquin-dia-1.png");
+}
+async function shareDay2() {
+  await exportAndShare(posterRefDay2, "cosquin-dia-2.png");
+}
+async function shareAll() {
+  await exportAndShare(posterRefAll, "cosquin-mi-grilla.png");
+}
 
   function selectedSummaryForSlot(slot: Slot) {
     const keys = selection[slot.time] ?? [];
@@ -934,7 +949,8 @@ function paintPageBackground() {
           </div>
 
           {/* POSTERS OCULTOS */}
-          <div className="fixed -left-[99999px] top-0">
+          <div className="fixed -left-0 top-0 opacity-0 pointer-events-none"
+          style={{transform: "translateY(-2000px" }}>
             <div ref={posterRefDay1}>
               <ExportPoster
                 variant="day1"
