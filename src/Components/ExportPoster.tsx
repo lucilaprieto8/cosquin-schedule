@@ -1,5 +1,14 @@
 import React, { useMemo } from "react";
 import { ARTIST_STYLES } from "@/src/data/artistStyle";
+import bg14 from "@/public/mi-grilla-14-feb.png";
+import bg15 from "@/public/mi-grilla-15-feb.png";
+import bgAll from "@/public/mi-grilla-global.png";
+
+function bgForVariant(variant: PosterVariant) {
+  if (variant === "day1") return bg14.src;
+  if (variant === "day2") return bg15.src;
+  return bgAll.src;
+}
 
 type Show = {
   day: 1 | 2;
@@ -33,12 +42,6 @@ function uniqueArtists(shows: Show[]) {
     if (!map.has(key)) map.set(key, s.artist.trim());
   }
   return Array.from(map.values());
-}
-
-function bgForVariant(variant: PosterVariant) {
-  if (variant === "day1") return "/mi-grilla-14.png";
-  if (variant === "day2") return "/mi-grilla-15.png";
-  return "/mi-grilla-global.png";
 }
 
 function fontSizeForCount(n: number) {
@@ -77,6 +80,8 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
         alt=""
         className="absolute inset-0 h-full w-full object-cover"
         draggable={false}
+        loading="eager"
+        decoding="sync"
       />
 
       {/* ZONA ARTISTAS */}

@@ -320,28 +320,41 @@ const shareDisabled = !isInstagramValid;
     return [...selectedShowsDay1, ...selectedShowsDay2];
   }, [selectedShowsDay1, selectedShowsDay2]);
 
-  async function waitForImages(el: HTMLElement) {
+async function waitForImages(el: HTMLElement) {
   const imgs = Array.from(el.querySelectorAll("img"));
+
   await Promise.all(
-    imgs.map(
-      (img) =>
-        img.complete
-          ? Promise.resolve()
-          : new Promise<void>((res, rej) => {
-              img.onload = () => res();
-              img.onerror = () => res(); // no bloquees si falla
-            })
-    )
+    imgs.map((img) => {
+      // ya cargada
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+
+      // esperar load/error
+      return new Promise<void>((resolve) => {
+        const done = () => resolve();
+        img.addEventListener("load", done, { once: true });
+        img.addEventListener("error", done, { once: true });
+      });
+    })
   );
 }
 
-async function exportPNGFromRef(ref: React.RefObject<HTMLDivElement | null>, filename: string) {
-  if (!ref.current) return;
+async function exportPNGFromRef(
+  ref: React.RefObject<HTMLDivElement | null>,
+  filename: string
+) {
+  const node = ref.current;
+  if (!node) return;
 
+  // fonts
   await document.fonts.ready;
-  await waitForImages(ref.current); // 👈 clave
 
-  const dataUrl = await htmlToImage.toPng(ref.current, {
+  // ✅ clave en iOS: esperar que carguen los <img> del poster
+  await waitForImages(node);
+
+  // mini delay para Safari (evita “snap” antes de pintar)
+  await new Promise((r) => setTimeout(r, 60));
+
+  const dataUrl = await htmlToImage.toPng(node, {
     cacheBust: true,
     pixelRatio: 2,
     backgroundColor: "#000000",
