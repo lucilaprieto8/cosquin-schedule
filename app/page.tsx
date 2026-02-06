@@ -359,51 +359,38 @@ async function exportAndShare(
   const node = ref.current;
   if (!node) return;
 
-  // 1) Esperar fonts
   await document.fonts.ready;
-
-  // 2) Esperar imágenes del poster
   await waitForImages(node);
+  await new Promise((r) => setTimeout(r, 120)); // un poquito más estable
 
-  // 3) Embebido de fonts (CLAVE para iOS + html-to-image)
-  const fontCSS = await htmlToImage.getFontEmbedCSS(node);
-
-  // mini delay para Safari
-  await new Promise((r) => setTimeout(r, 80));
-
-  // 4) Export PNG
-  const dataUrl = await htmlToImage.toPng(node, {
+  const blob = await htmlToImage.toBlob(node, {
+    cacheBust: true,
     pixelRatio: 2,
     backgroundColor: "#000000",
-    cacheBust: true,
-    fontEmbedCSS: fontCSS,
   });
 
-  // 5) DataURL -> Blob (sin fetch, más estable en iOS)
-  const blob = await (await fetch(dataUrl)).blob();
+  if (!blob) return;
+
   const file = new File([blob], filename, { type: "image/png" });
 
-  // 📱 iOS → Share Sheet (con fallback si falla)
-  try {
-    if (isIOS() && navigator.canShare?.({ files: [file] })) {
-      await navigator.share({
-        files: [file],
-        title: "Mi grilla Cosquín",
-        text: "Mi grilla de Cosquín Rock 🎸",
-      });
-      return;
-    }
-  } catch {
-    // si el share falla, seguimos al download
+  // iOS Share Sheet
+  if (isIOS() && navigator.canShare?.({ files: [file] })) {
+    await navigator.share({
+      files: [file],
+      title: "Mi grilla Cosquín",
+      text: "Mi grilla de Cosquín Rock 🎸",
+    });
+    return;
   }
 
-  // 💻/📱 fallback → descarga
+  // Desktop fallback: descarga
+  const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-  link.href = dataUrl;
+  link.href = url;
   link.download = filename;
   link.click();
+  URL.revokeObjectURL(url);
 }
-
 async function shareDay1() {
   await exportAndShare(posterRefDay1, "cosquin-dia-1.png");
 }

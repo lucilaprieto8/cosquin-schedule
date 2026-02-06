@@ -132,15 +132,15 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
                     fontFamily: "var(--font-cosquin)",
                     fontSize: fs,
                     lineHeight: 1.05,
-                    letterSpacing: "0.04em",
                     textTransform: "uppercase",
+                    letterSpacing: "0.04em",
                     textShadow: "0 2px 18px rgba(0,0,0,0.25)",
-
                     display: "inline-block",
                     whiteSpace: "nowrap",
                     margin: "0 14px 18px",
                   }}
                 >
+
                   {name}
                 </span>
               );
