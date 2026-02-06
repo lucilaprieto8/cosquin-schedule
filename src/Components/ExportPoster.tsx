@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useMemo } from "react";
 import { ARTIST_STYLES } from "@/src/data/artistStyle";
 
@@ -11,32 +9,30 @@ type Show = {
   time: string;
 };
 
-type PosterVariant = "day1" | "day2" | "all";
+export type PosterVariant = "day1" | "day2" | "all";
 
 type Props = {
   variant: PosterVariant;
   selectedShows: Show[];
-  instagram: string; // 👈 nuevo
+  instagram?: string; // opcional
 };
-
 
 function getArtistStyle(name: string) {
   const key = name.trim().toUpperCase();
   return (
     ARTIST_STYLES[key] ?? {
       colorClass: "text-white",
-      sizeClass: "",
     }
   );
 }
 
 function uniqueArtists(shows: Show[]) {
-  const set = new Map<string, string>(); // KEY -> display name
+  const map = new Map<string, string>(); // KEY -> display name
   for (const s of shows) {
     const key = s.artist.trim().toUpperCase();
-    if (!set.has(key)) set.set(key, s.artist.trim());
+    if (!map.has(key)) map.set(key, s.artist.trim());
   }
-  return Array.from(set.values());
+  return Array.from(map.values());
 }
 
 function bgForVariant(variant: PosterVariant) {
@@ -47,7 +43,7 @@ function bgForVariant(variant: PosterVariant) {
 }
 
 function fontSizeForCount(n: number) {
-  // ✅ más agresivo para que ocupe ~70% del contenedor y se lea bien
+  // ✅ bastante grande para ocupar el centro y leerse bien
   if (n <= 8) return 90;
   if (n <= 10) return 82;
   if (n <= 14) return 70;
@@ -57,7 +53,7 @@ function fontSizeForCount(n: number) {
   return 42;
 }
 
-export default function ExportPoster({ variant, selectedShows, instagram }: Props) {
+export default function ExportPoster({ variant, selectedShows, instagram = "" }: Props) {
   const artists = useMemo(() => {
     return uniqueArtists(selectedShows).sort((a, b) => a.localeCompare(b, "es"));
   }, [selectedShows]);
@@ -65,33 +61,26 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
   const fs = fontSizeForCount(artists.length);
 
   return (
-   <div
-    className="relative text-white"
-    style={{
-      width: 1080,
-      height: 1920,
-
-      // 👇 FONDO CORRECTO PARA EXPORT (mobile-safe)
-      backgroundImage: `url(${bgForVariant(variant)})`,
-      backgroundRepeat: "no-repeat",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-
-      // 👇 MUY IMPORTANTE PARA iOS
-      backgroundColor: "#000000",
-    }}
-  >
-    <div className="relative z-10">
-      {/* ZONA ARTISTAS: centrada y ocupando ~70% */}
+    <div
+      className="relative text-white"
+      style={{
+        width: 1080,
+        height: 1920,
+        backgroundImage: `url('${bgForVariant(variant)}')`,
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        overflow: "hidden",
+      }}
+    >
+      {/* ZONA ARTISTAS (sin flex-wrap para que iOS Safari no superponga al exportar) */}
       <div
         className="absolute left-0 right-0"
         style={{
-          // ✅ si alguna vez querés ajustar “donde cae” el bloque:
           top: 480,
           bottom: 280,
           paddingLeft: 110,
           paddingRight: 110,
-
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -106,19 +95,16 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
               textTransform: "uppercase",
               opacity: 0.9,
               textAlign: "center",
+              textShadow: "0 2px 18px rgba(0,0,0,0.45)",
             }}
           >
             Elegí artistas para armar tu grilla
           </div>
         ) : (
           <div
-            className="flex flex-wrap justify-center items-center text-center"
             style={{
+              textAlign: "center",
               maxWidth: "92%",
-              // ✅ más aire pero sin achicar demasiado el bloque
-              rowGap: 18,
-              columnGap: 26,
-              alignContent: "center",
             }}
           >
             {artists.map((name) => {
@@ -134,6 +120,10 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
                     lineHeight: 1.05,
                     letterSpacing: "0.04em",
                     textTransform: "uppercase",
+                    textShadow: "0 2px 18px rgba(0,0,0,0.45)",
+
+                    display: "inline-block", // ✅ iOS safe
+                    margin: "0 14px 18px",   // ✅ reemplaza gap/rowGap
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -144,26 +134,24 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
           </div>
         )}
       </div>
-      </div>
-      {/* IG ABAJO (en el margen del rectángulo) */}
-{instagram?.trim() && (
-  <div
-    className="absolute left-0 right-0 text-center"
-    style={{
-      // ✅ ajustá finito si lo querés más arriba/abajo
-      bottom: 155,
-      fontFamily: "var(--font-circular)",
-      fontSize: 34,
-      letterSpacing: "0.08em",
-      textTransform: "uppercase",
-      color: "rgba(255,255,255,0.85)",
-      textShadow: "0 3px 18px rgba(0,0,0,0.55)",
-    }}
-  >
-    @{instagram}
-  </div>
-)}
 
+      {/* IG ABAJO (en el margen del rectángulo) */}
+      {instagram.trim() && (
+        <div
+          className="absolute left-0 right-0 text-center"
+          style={{
+            bottom: 155,
+            fontFamily: "var(--font-circular)",
+            fontSize: 34,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.85)",
+            textShadow: "0 3px 18px rgba(0,0,0,0.55)",
+          }}
+        >
+          @{instagram.replace(/@/g, "")}
+        </div>
+      )}
     </div>
   );
 }
