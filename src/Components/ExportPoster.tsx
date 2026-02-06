@@ -35,7 +35,7 @@ function scaleFromSizeClass(sizeClass?: string) {
     case "cr-s-32":
       return 1.0;
     case "cr-s-28":
-      return 0.92;
+      return 0.84;
     default:
       return 1.0;
   }
@@ -103,7 +103,7 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
       <div
         className="absolute left-0 right-0"
         style={{
-          top: 480,
+          top: 420,
           bottom: 280,
           paddingLeft: 110,
           paddingRight: 110,
@@ -169,9 +169,9 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
         <div
           className="absolute left-0 right-0 text-center"
           style={{
-            bottom: 155,
+            bottom: 185,
             fontFamily: "var(--font-circular)",
-            fontSize: 34,
+            fontSize: 40,
             letterSpacing: "0.08em",
             textTransform: "uppercase",
             color: "rgba(255,255,255,0.85)",
@@ -182,6 +182,21 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
           @{ig}
         </div>
       )}
+       <div
+          className="absolute left-0 right-0 text-center"
+          style={{
+            bottom: 120,
+            fontFamily: "var(--font-circular)",
+            fontSize: 24,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.85)",
+            textShadow: "0 3px 18px rgba(0,0,0,0.25)",
+            zIndex: 2,
+          }}
+        >
+          crea tu grilla en www.grillacosquinrock.com.ar
+        </div>
     </div>
   );
 }

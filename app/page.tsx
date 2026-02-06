@@ -947,20 +947,6 @@ doc.roundedRect(pillX, pillY, pillW, pillH, 16, 16, "FD");
               >
                 COMPARTIR DÍA 2
               </button>
-
-              <button
-                onClick={shareAll}
-                disabled={shareDisabled}
-                className={[
-                  "px-6 md:px-10 py-3 text-[14px] md:text-[16px] uppercase tracking-widest transition",
-                  shareDisabled
-                    ? "opacity-40 cursor-not-allowed bg-white/10 text-white/70"
-                    : "bg-[#A571CF] text-white",
-                ].join(" ")}
-                style={{ fontFamily: "var(--font-circular)" }}
-              >
-                COMPARTIR MI GRILLA
-              </button>
             </div>
 
             {/* PDF */}
