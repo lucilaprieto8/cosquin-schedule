@@ -7,6 +7,7 @@ import day2 from "@/src/data/day2.json";
 import ExportPoster from "@/src/Components/ExportPoster";
 import { jsPDF } from "jspdf";
 import { transform } from "next/dist/build/swc/generated-native";
+import html2canvas from "html2canvas";
 
 
 type Show = {
@@ -352,6 +353,11 @@ export default function Page() {
     );
   }
 
+function isIOS() {
+  if (typeof navigator === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
 async function exportAndShare(
   ref: React.RefObject<HTMLDivElement | null>,
   filename: string
@@ -361,20 +367,38 @@ async function exportAndShare(
 
   await document.fonts.ready;
   await waitForImages(node);
-  await new Promise((r) => setTimeout(r, 120)); // un poquito más estable
+  await new Promise((r) => setTimeout(r, 120)); // iOS necesita un pelín más
 
-  const blob = await htmlToImage.toBlob(node, {
-    cacheBust: true,
-    pixelRatio: 2,
-    backgroundColor: "#000000",
-  });
+  let blob: Blob | null = null;
+
+  if (isIOS()) {
+    // ✅ iOS: html2canvas (evita el bug de tipografías)
+    const canvas = await html2canvas(node, {
+      backgroundColor: "#000000",
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+    });
+
+    blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/png")
+    );
+  } else {
+    // 💻 Desktop: html-to-image
+    blob = await htmlToImage.toBlob(node, {
+      cacheBust: true,
+      pixelRatio: 2,
+      backgroundColor: "#000000",
+    });
+  }
 
   if (!blob) return;
 
   const file = new File([blob], filename, { type: "image/png" });
 
-  // iOS Share Sheet
-  if (isIOS() && navigator.canShare?.({ files: [file] })) {
+  // 📱 Share Sheet iOS
+  if (navigator.canShare?.({ files: [file] })) {
     await navigator.share({
       files: [file],
       title: "Mi grilla Cosquín",
@@ -383,7 +407,7 @@ async function exportAndShare(
     return;
   }
 
-  // Desktop fallback: descarga
+  // fallback descarga
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -391,6 +415,7 @@ async function exportAndShare(
   link.click();
   URL.revokeObjectURL(url);
 }
+
 async function shareDay1() {
   await exportAndShare(posterRefDay1, "cosquin-dia-1.png");
 }
