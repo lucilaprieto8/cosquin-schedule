@@ -8,6 +8,7 @@ import ExportPoster from "@/src/Components/ExportPoster";
 import { jsPDF } from "jspdf";
 import { transform } from "next/dist/build/swc/generated-native";
 import html2canvas from "html2canvas";
+import { COSQUIN_FONT, CIRCULAR_FONT, MELORIAC_FONT } from "@/src/utils/pdfFonts";
 
 
 type Show = {
@@ -467,23 +468,21 @@ async function shareAll() {
     });
   }
 
-  type PdfRow = {
-  time: string;   // "HH:MM"
-  stage: string;  // "Norte"
-  artist: string; // "AIRBAG" | "Libre / descanso"
-};
+type PdfRow = { time: string; stage: string; artist: string };
 
 function hexToRgb(hex: string) {
-  const h = hex.replace("#", "").trim();
-  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
-  const n = parseInt(full, 16);
-  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  const h = hex.replace("#", "");
+  const bigint = parseInt(h.length === 3 ? h.split("").map(c => c + c).join("") : h, 16);
+  return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 };
 }
 
-function withAlphaOnWhite(rgb: { r: number; g: number; b: number }, alpha: number) {
-  // mezcla rgb con blanco => (1-a)*255 + a*rgb
-  const mix = (c: number) => Math.round((1 - alpha) * 255 + alpha * c);
-  return { r: mix(rgb.r), g: mix(rgb.g), b: mix(rgb.b) };
+// mezcla un color sobre blanco (para “tint”)
+function withAlphaOnWhite(rgb: { r: number; g: number; b: number }, a: number) {
+  return {
+    r: Math.round(255 * (1 - a) + rgb.r * a),
+    g: Math.round(255 * (1 - a) + rgb.g * a),
+    b: Math.round(255 * (1 - a) + rgb.b * a),
+  };
 }
 
 function buildRowsForDay(dayKey: DayKey): PdfRow[] {
@@ -535,7 +534,18 @@ function paintPageBackground() {
   doc.rect(0, 0, PAGE_W, PAGE_H, "F"); // llena toda la hoja
 }
 
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
+const doc = new jsPDF({ unit: "pt", format: "a4" });
+
+// ===== REGISTRO DE FUENTES =====
+doc.addFileToVFS("CosquinDisplay.ttf", COSQUIN_FONT);
+doc.addFont("CosquinDisplay.ttf", "Cosquin", "normal");
+
+doc.addFileToVFS("Circular.otf", CIRCULAR_FONT);
+doc.addFont("Circular.otf", "Circular", "normal");
+doc.addFont("Circular.otf", "Circular", "bold");
+
+doc.addFileToVFS("Meloriac.ttf", MELORIAC_FONT);
+doc.addFont("Meloriac.ttf", "Meloriac", "normal");
 
   const PAGE_W = doc.internal.pageSize.getWidth();
   const PAGE_H = doc.internal.pageSize.getHeight();
@@ -565,25 +575,51 @@ function paintPageBackground() {
 
   let y = M;
 
-  function drawHeader() {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.setTextColor(20);
-    doc.text("ITINERARIO COSQUÍN", M, y + 22);
+function drawHeader() {
+  // título
+  doc.setFont("Meloriac", "normal");
+  doc.setFontSize(18);
+  doc.setTextColor(255, 255, 255);
+  doc.text("ITINERARIO COSQUÍN", M, y + 22);
 
-    if (logoDataUrl) {
-      const logoW = 120;
-      const logoH = 24;
-      doc.addImage(logoDataUrl, "PNG", PAGE_W - M - logoW, y, logoW, logoH);
-    }
-
-    y += HEADER_H;
-    doc.setDrawColor(220);
-    doc.line(M, y, PAGE_W - M, y);
-    y += 14;
+  // logo
+  if (logoDataUrl) {
+    const logoW = 120;
+    const logoH = 24;
+    doc.addImage(logoDataUrl, "PNG", PAGE_W - M - logoW, y, logoW, logoH);
   }
 
-  function newPage() {
+  y += HEADER_H;
+
+  // línea sutil blanca
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(0.6);
+  doc.setGState?.(new (doc as any).GState({ opacity: 0.25 }));
+  doc.line(M, y, PAGE_W - M, y);
+  doc.setGState?.(new (doc as any).GState({ opacity: 1 }));
+
+  y += 14;
+}
+
+function drawDayTitle(text: string) {
+  ensureSpace(52);
+
+  doc.setFont("Meloriac", "normal");
+  doc.setFontSize(14);
+  doc.setTextColor(255, 255, 255);
+  doc.text(text, M, y + 8);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
+  // subtítulo con opacidad (si tu jsPDF soporta GState)
+  doc.setGState?.(new (doc as any).GState({ opacity: 0.75 }));
+  doc.setGState?.(new (doc as any).GState({ opacity: 1 }));
+
+  y += 40;
+}
+
+function newPage() {
     doc.addPage();
     paintPageBackground();
     y = M;
@@ -594,92 +630,89 @@ function paintPageBackground() {
     if (y + needed > PAGE_H - M) newPage();
   }
 
-  function drawDayTitle(text: string) {
-    ensureSpace(48);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.setTextColor(20);
-    doc.text(text, M, y + 6);
+function getStageAccent(stage: string) {
+  // color acento del borde (por stage)
+  const base = stage ? (STAGE_PDF[stage]?.border ?? "#DD5227") : "#FFFFFF";
+  return hexToRgb(base);
+}
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(110);
-    doc.text("Artista — Hora — Escenario", M, y + 22);
+function drawRowCard(row: PdfRow) {
+  const GAP = 10;
 
-    y += 34;
-  }
+  const accent = getStageAccent(row.stage);
 
-  function getStageColors(stage: string) {
-    if (!stage) {
-      return {
-        border: { r: 210, g: 210, b: 210 },
-        bg: { r: 248, g: 248, b: 248 },
-        text: { r: 25, g: 25, b: 25 },
-        sub: { r: 90, g: 90, b: 90 },
-      };
-    }
+  // Card UI (oscuro translúcido)
+  const cardH = 62;
+  ensureSpace(cardH + GAP);
 
-    const base = STAGE_PDF[stage]?.border ?? "#DD5227";
-    const border = hexToRgb(base);
-    const bg = withAlphaOnWhite(border, 0.12); // ~12% tint como “bg suave”
+  // mismo azul del fondo pero más oscuro (card)
+const cardBg = hexToRgb("#193E85");
+doc.setFillColor(cardBg.r, cardBg.g, cardBg.b);
 
-    return {
-      border,
-      bg,
-      text: { r: 18, g: 18, b: 18 },
-      sub: { r: 70, g: 70, b: 70 },
-    };
-  }
+  // borde general blanco 15%
+  const border = withAlphaOnWhite({ r: 255, g: 255, b: 255 }, 0.18);
+  doc.setDrawColor(border.r, border.g, border.b);
+  doc.setLineWidth(1);
+  doc.roundedRect(M, y, cardW, cardH, 14, 14, "FD");
 
-  function drawRowCard(row: PdfRow) {
-    // altura dinámica (si el artista es largo, puede caer en 2 líneas)
-    const artistMaxW = cardW - CARD_PAD_X * 2;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
+  // borde acento (izq) del color del escenario
+  doc.setDrawColor(accent.r, accent.g, accent.b);
+  doc.setLineWidth(3);
+  doc.line(M + 8, y + 10, M + 8, y + cardH - 10);
 
-    const artistLines = doc.splitTextToSize(row.artist.toUpperCase(), artistMaxW);
-    const artistLineH = 14;
+  // Layout
+  const leftX = M + 22;
+  const rightX = M + cardW - 16;
 
-    const subLineH = 12;
-    const cardH =
-      CARD_PAD_Y +
-      artistLines.length * artistLineH +
-      6 +
-      subLineH +
-      CARD_PAD_Y;
+  // ARTISTA (izq, grande)
+  doc.setFont("Meloriac", "normal");
+  doc.setFontSize(14);
+  doc.setTextColor(255, 255, 255);
 
-    ensureSpace(cardH + GAP);
+  const artistMaxW = cardW - 22 - 90; // deja espacio para la hora a la derecha
+  const artistText = row.artist.toUpperCase();
+  const artistLines = doc.splitTextToSize(artistText, artistMaxW);
 
-    const colors = getStageColors(row.stage);
+  // si se va a 2 líneas, bajamos un toque
+  let artistY = y + 26;
+  if (artistLines.length > 1) artistY = y + 20;
 
-    // card
-    doc.setDrawColor(colors.border.r, colors.border.g, colors.border.b);
-    doc.setFillColor(colors.bg.r, colors.bg.g, colors.bg.b);
-    doc.roundedRect(M, y, cardW, cardH, 10, 10, "FD");
+  doc.text(artistLines.slice(0, 2), leftX, artistY);
 
-    const x = M + CARD_PAD_X;
-    let yy = y + CARD_PAD_Y + 12;
+  // ESCENARIO (abajo, izq)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
+  // “opacidad” simulada: gris clarito
+  doc.setTextColor(230, 235, 245);
 
-    // ARTISTA (bold)
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
+  const stageText = row.stage ? row.stage : "Libre / descanso";
+  doc.text(stageText, leftX, y + cardH - 16);
 
-    for (const line of artistLines) {
-      doc.text(String(line), x, yy);
-      yy += artistLineH;
-    }
+  // HORA (derecha, “circular” look)
+  // pill / badge
+  const pillW = 74;
+  const pillH = 30;
+  const pillX = rightX - pillW;
+  const pillY = y + (cardH - pillH) / 2;
 
-    // sub: HORA • ESCENARIO
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(colors.sub.r, colors.sub.g, colors.sub.b);
+  // fondo pill = color del escenario
+doc.setFillColor(accent.r, accent.g, accent.b);
 
-    const stageText = row.stage ? row.stage : "—";
-    doc.text(`${row.time}  •  ${stageText}`, x, yy + 2);
+// borde pill un poco más oscuro (simula contraste)
+const pillBorder = withAlphaOnWhite(accent, 0.85);
+doc.setDrawColor(pillBorder.r, pillBorder.g, pillBorder.b);
+doc.setLineWidth(1);
+doc.roundedRect(pillX, pillY, pillW, pillH, 16, 16, "FD");
 
-    y += cardH + GAP;
-  }
+  // texto hora (bold)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(255, 255, 255);
+  doc.text(row.time, pillX + pillW / 2, pillY + 20, { align: "center" });
+
+  y += cardH + GAP;
+}
 
   // START
   drawHeader();
@@ -745,7 +778,7 @@ function paintPageBackground() {
                 onClick={() => setDay(1)}
                 className={[
                   "rounded-full px-10 py-4",
-                  "text-[22px] md:text-[26px] uppercase tracking-widest transition",
+                  "text-[20px] md:text-[26px] uppercase tracking-widest transition",
                   day === 1
                     ? "bg-[#DD5227] text-white"
                     : "bg-white/10 text-white/80 hover:bg-white/20",
@@ -759,7 +792,7 @@ function paintPageBackground() {
                 onClick={() => setDay(2)}
                 className={[
                   "rounded-full px-10 py-4",
-                  "text-[22px] md:text-[26px] uppercase tracking-widest transition",
+                  "text-[20px] md:text-[26px] uppercase tracking-widest transition",
                   day === 2
                     ? "bg-[#0e7a4c] text-white"
                     : "bg-white/10 text-white/80 hover:bg-white/20",
@@ -1123,7 +1156,7 @@ function paintPageBackground() {
         )}
 
         <footer className="mt-12 mb-6 text-center text-sm tracking-wide text-white/70">
-          © 2024 Cosquín Rock. Todos los derechos reservados.
+          © 2026 Cosquín Rock. Todos los derechos reservados.
         </footer>
       </div>
     </div>

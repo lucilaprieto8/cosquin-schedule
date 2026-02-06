@@ -4,12 +4,6 @@ import bg14 from "@/public/mi-grilla-14.png";
 import bg15 from "@/public/mi-grilla-15.png";
 import bgAll from "@/public/mi-grilla-global.png";
 
-function bgForVariant(variant: PosterVariant) {
-  if (variant === "day1") return bg14.src;
-  if (variant === "day2") return bg15.src;
-  return bgAll.src;
-}
-
 type Show = {
   day: 1 | 2;
   date: string;
@@ -26,11 +20,33 @@ type Props = {
   instagram?: string;
 };
 
+function bgForVariant(variant: PosterVariant) {
+  if (variant === "day1") return bg14.src;
+  if (variant === "day2") return bg15.src;
+  return bgAll.src;
+}
+
+function scaleFromSizeClass(sizeClass?: string) {
+  switch (sizeClass) {
+    case "cr-s-40":
+      return 1.12; // headliners
+    case "cr-s-34":
+      return 1.04;
+    case "cr-s-32":
+      return 1.0;
+    case "cr-s-28":
+      return 0.92;
+    default:
+      return 1.0;
+  }
+}
+
 function getArtistStyle(name: string) {
   const key = name.trim().toUpperCase();
   return (
     ARTIST_STYLES[key] ?? {
       colorClass: "text-white",
+      sizeClass: "cr-s-32", // 👈 default para que SIEMPRE exista
     }
   );
 }
@@ -61,8 +77,7 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
 
   const fs = fontSizeForCount(artists.length);
   const bg = bgForVariant(variant);
-
-  const ig = (instagram ?? "").replace(/@/g, "").trim(); // safe
+  const ig = (instagram ?? "").replace(/@/g, "").trim();
 
   return (
     <div
@@ -74,7 +89,7 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
         backgroundColor: "#000",
       }}
     >
-      {/* ✅ Fondo como IMG (soluciona Safari/iOS + html-to-image) */}
+      {/* Fondo como IMG (Safari/iOS + html-to-image) */}
       <img
         src={bg}
         alt=""
@@ -117,12 +132,13 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
             style={{
               textAlign: "center",
               maxWidth: "92%",
-              // ✅ importante: NO usar gap/rowGap en iOS export
-              // ✅ y NO usar flex-wrap en el contenedor; dejamos inline-block en spans
             }}
           >
             {artists.map((name) => {
               const st = getArtistStyle(name);
+              const scale = scaleFromSizeClass(st.sizeClass);
+              const finalSize = Math.round(fs * scale); // 👈 importante: entero (mejor render/export)
+              const marginBottom = Math.max(8, Math.round(finalSize * 0.18)); // 👈 baja “interlineado” real
 
               return (
                 <span
@@ -130,17 +146,16 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
                   className={st.colorClass}
                   style={{
                     fontFamily: "var(--font-cosquin)",
-                    fontSize: fs,
-                    lineHeight: 1.05,
+                    fontSize: finalSize,
+                    lineHeight: 0.95, // 👈 más “apretado”
                     textTransform: "uppercase",
                     letterSpacing: "0.04em",
                     textShadow: "0 2px 18px rgba(0,0,0,0.25)",
                     display: "inline-block",
                     whiteSpace: "nowrap",
-                    margin: "0 14px 18px",
+                    margin: `0 14px ${marginBottom}px`, // 👈 menos aire vertical
                   }}
                 >
-
                   {name}
                 </span>
               );
