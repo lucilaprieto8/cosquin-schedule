@@ -169,10 +169,10 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
         <div
           className="absolute left-0 right-0 text-center"
           style={{
-            bottom: 190,
+            bottom: 200,
             fontFamily: "var(--font-Meloriac)",
-            fontSize: 60,
-            letterSpacing: "0.08em",
+            fontSize: 55,
+            letterSpacing: "0.02em",
             textTransform: "uppercase",
             color: "rgba(255,255,255,0.85)",
             textShadow: "0 3px 18px rgba(0,0,0,0.25)",
@@ -185,7 +185,7 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
        <div
   className="absolute left-0 right-0 text-center"
   style={{
-    bottom: 130,
+    bottom: 120,
     fontFamily: "var(--font-circular)",
     fontSize: 30,
     letterSpacing: "0.08em",
