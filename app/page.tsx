@@ -6,7 +6,6 @@ import day1 from "@/src/data/day1.json";
 import day2 from "@/src/data/day2.json";
 import ExportPoster from "@/src/Components/ExportPoster";
 import { jsPDF } from "jspdf";
-import { transform } from "next/dist/build/swc/generated-native";
 import html2canvas from "html2canvas";
 import { COSQUIN_FONT, CIRCULAR_FONT, MELORIAC_FONT } from "@/src/utils/pdfFonts";
 
@@ -781,7 +780,7 @@ async function downloadPDFItinerary() {
     <div
       className="relative min-h-dvh overflow-hidden text-white"
       style={{
-        backgroundImage: "url('/bg/cr-background.png')",
+        backgroundImage: "url('/bg/cr-background.jpeg')",
         backgroundRepeat: "no-repeat",
         backgroundSize: "cover",
         backgroundPosition: "top center",
@@ -1012,7 +1011,7 @@ async function downloadPDFItinerary() {
 
           {/* POSTERS OCULTOS */}
           <div className="fixed -left-0 top-0 opacity-0 pointer-events-none"
-          style={{transform: "translateY(-2000px)" }}>
+          style={{transform: "translateY(-2000px) " }}>
             <div ref={posterRefDay1}>
               <ExportPoster
                 variant="day1"
