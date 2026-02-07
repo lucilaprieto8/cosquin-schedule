@@ -29,15 +29,15 @@ function bgForVariant(variant: PosterVariant) {
 function scaleFromSizeClass(sizeClass?: string) {
   switch (sizeClass) {
     case "cr-s-40":
-      return 1.12; // headliners
+      return 1.20; // headliners
     case "cr-s-34":
-      return 1.04;
+      return 1.10;
     case "cr-s-32":
-      return 1.0;
+      return 1.05;
     case "cr-s-28":
-      return 0.84;
+      return 0.80;
     default:
-      return 1.0;
+      return 0.80;
   }
 }
 
@@ -169,9 +169,9 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
         <div
           className="absolute left-0 right-0 text-center"
           style={{
-            bottom: 185,
-            fontFamily: "var(--font-circular)",
-            fontSize: 40,
+            bottom: 190,
+            fontFamily: "var(--font-Meloriac)",
+            fontSize: 60,
             letterSpacing: "0.08em",
             textTransform: "uppercase",
             color: "rgba(255,255,255,0.85)",
@@ -183,20 +183,24 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
         </div>
       )}
        <div
-          className="absolute left-0 right-0 text-center"
-          style={{
-            bottom: 120,
-            fontFamily: "var(--font-circular)",
-            fontSize: 24,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: "rgba(255,255,255,0.85)",
-            textShadow: "0 3px 18px rgba(0,0,0,0.25)",
-            zIndex: 2,
-          }}
-        >
-          crea tu grilla en www.grillacosquinrock.com.ar
-        </div>
+  className="absolute left-0 right-0 text-center"
+  style={{
+    bottom: 130,
+    fontFamily: "var(--font-circular)",
+    fontSize: 30,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    color: "rgba(255,255,255,0.85)",
+    textShadow: "0 3px 18px rgba(0,0,0,0.25)",
+    zIndex: 2,
+    lineHeight: 1.3,
+  }}
+>
+  <div>Creá tu grilla en</div>
+  <div style={{ fontWeight: 700, fontStyle: "italic" }}>
+    www.grillacosquinrock.com
+  </div>
+</div>
     </div>
   );
 }

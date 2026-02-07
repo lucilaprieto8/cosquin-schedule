@@ -30,6 +30,8 @@ type Selection = {
   [time: string]: string[];
 };
 
+const MAX_PER_SLOT = 3;
+
 const STORAGE_KEY = "cosquin_schedule_v1";
 
 function showKey(s: Show) {
@@ -108,25 +110,26 @@ function saveSelection(all: Record<string, Selection>) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
 }
 
+
 /**
  * Colores (los afinamos con el manual cuando quieras).
  * Acá los dejo sólidos para que se distingan.
  */
 const STAGE_PDF: Record<string, { border: string; bg: string }> = {
-  Norte: { border: "#DD5227", bg: "rgba(221,82,39,0.10)" },
-  Sur: { border: "#DD5227", bg: "rgba(221,82,39,0.10)" },
+  Norte: { border: "#DD5227", bg: "#DD5227" },
+  Sur: { border: "#377D8A", bg: "#377D8A" },
 
-  Boomerang: { border: "#7CFF5B", bg: "rgba(124,255,91,0.10)" },
-  Montaña: { border: "#1AD6FF", bg: "rgba(26,214,255,0.10)" },
-  "La Casita del Blues": { border: "#B46CFF", bg: "rgba(180,108,255,0.10)" },
-  Electronic: { border: "#FF4D4D", bg: "rgba(255,77,77,0.10)" },
+  Boomerang: { border: "#A571CF", bg: "#A571CF" },
+  Montaña: { border: "#38754A", bg: "#38754A" },
+  "La Casita del Blues": { border: "#193E85", bg: "#193E85" },
+  Electronic: { border: "#3D15B8", bg: "#3D15B8" },
   "La Plaza Electronic Stage": {
-    border: "#FF4D4D",
-    bg: "rgba(255,77,77,0.10)",
+    border: "#3D15B8",
+    bg: "#3D15B8",
   },
 
-  Paraguay: { border: "#FFA800", bg: "rgba(255,168,0,0.10)" },
-  Sorpresa: { border: "#FFA800", bg: "rgba(255,168,0,0.10)" },
+  Paraguay: { border: "#A571CF", bg: "#A571CF" },
+  Sorpresa: { border: "#cc8903", bg: "#cc8903" },
 };
 
 const STAGE_THEME: Record<
@@ -140,23 +143,23 @@ const STAGE_THEME: Record<
   }
 > = {
   Norte: {
-    cardBg: "bg-[#77B4D2]",
-    text: "text-[#0b0b10]",
-    chip: "bg-[#77B4D2] text-[#0b0b10]",
-    badge: "border-black/20 bg-black/10 text-[#0b0b10]",
+    cardBg: "bg-[#DD5227]",
+    text: "text-white",
+    chip: "bg-[#DD5227] text-white",
+    badge: "border-black/20 bg-black/10 text-white",
     checkOn: "peer-checked:border-[#0b0b10] peer-checked:bg-[#0b0b10]",
   },
   Sur: {
-    cardBg: "bg-[#A571CF]",
+    cardBg: "bg-[#377D8A]",
     text: "text-white",
-    chip: "bg-[#A571CF] text-white",
+    chip: "bg-[#377D8A] text-white",
     badge: "border-white/25 bg-white/15 text-white",
     checkOn: "peer-checked:border-white peer-checked:bg-white",
   },
   "La Casita del Blues": {
-    cardBg: "bg-[#DD5227]",
+    cardBg: "bg-[#193E85]",
     text: "text-white",
-    chip: "bg-[#DD5227] text-white",
+    chip: "bg-[#193E85] text-white",
     badge: "border-white/25 bg-white/15 text-white",
     checkOn: "peer-checked:border-white peer-checked:bg-white",
   },
@@ -168,30 +171,30 @@ const STAGE_THEME: Record<
     checkOn: "peer-checked:border-white peer-checked:bg-white",
   },
   Boomerang: {
+    cardBg: "bg-[#A571CF]",
+    text: "text-white",
+    chip: "bg-[#A571CF] text-white",
+    badge: "border-white/25 bg-white/15 text-white",
+    checkOn: "peer-checked:border-white peer-checked:bg-white",
+  },
+  Paraguay: {
+    cardBg: "bg-[#A571CF]",
+    text: "text-white",
+    chip: "bg-[#A571CF] text-white",
+    badge: "border-white/25 bg-white/15 text-white",
+    checkOn: "peer-checked:border-white peer-checked:bg-white",
+  },
+  Electronic: {
     cardBg: "bg-[#3D15B8]",
     text: "text-white",
     chip: "bg-[#3D15B8] text-white",
     badge: "border-white/25 bg-white/15 text-white",
     checkOn: "peer-checked:border-white peer-checked:bg-white",
   },
-  Paraguay: {
-    cardBg: "bg-[#377D8A]",
-    text: "text-white",
-    chip: "bg-[#377D8A] text-white",
-    badge: "border-white/25 bg-white/15 text-white",
-    checkOn: "peer-checked:border-white peer-checked:bg-white",
-  },
-  Electronic: {
-    cardBg: "bg-[#193E85]",
-    text: "text-white",
-    chip: "bg-[#193E85] text-white",
-    badge: "border-white/25 bg-white/15 text-white",
-    checkOn: "peer-checked:border-white peer-checked:bg-white",
-  },
   Sorpresa: {
-    cardBg: "bg-white/15",
+    cardBg: "bg-[#cc8903]",
     text: "text-white",
-    chip: "bg-white/15 text-white",
+    chip: "bg-[#cc8903] text-white",
     badge: "border-white/25 bg-white/10 text-white",
     checkOn: "peer-checked:border-[#DD5227] peer-checked:bg-[#DD5227]",
   },
@@ -229,6 +232,13 @@ function slotCardClass(index: number) {
 
 export default function Page() {
   const [instagram, setInstagram] = useState<string>("");
+
+  const [limitMsg, setLimitMsg] = useState<string>("");
+
+  function flashLimit(msg: string) {
+  setLimitMsg(msg);
+  window.setTimeout(() => setLimitMsg(""), 1600);
+}
 
   const allShows: Show[] = useMemo(() => {
     // @ts-ignore
@@ -269,31 +279,49 @@ function sanitizeInstagram(raw: string) {
     saveSelection(allSelection);
   }, [allSelection]);
 
-  function toggleOption(time: string, optionKey: string) {
-    setAllSelection((prev) => {
-      const next = { ...prev };
-      const dayKey = String(day);
-      const daySel: Selection = { ...(next[dayKey] ?? {}) };
-      const current = new Set(daySel[time] ?? []);
+ function toggleOption(time: string, optionKey: string) {
+  setAllSelection((prev) => {
+    const next = { ...prev };
+    const dayKey = String(day);
+    const daySel: Selection = { ...(next[dayKey] ?? {}) };
+    const current = new Set(daySel[time] ?? []);
 
-      if (optionKey === "FREE") {
-        if (current.has("FREE")) current.delete("FREE");
-        else {
-          current.clear();
-          current.add("FREE");
-        }
-      } else {
-        current.delete("FREE");
-        if (current.has(optionKey)) current.delete(optionKey);
-        else current.add(optionKey);
+    if (optionKey === "FREE") {
+      if (current.has("FREE")) current.delete("FREE");
+      else {
+        current.clear();
+        current.add("FREE");
       }
-
       daySel[time] = Array.from(current);
       next[dayKey] = daySel;
       return next;
-    });
-  }
+    }
 
+    // si eligen algo, sacamos FREE
+    current.delete("FREE");
+
+    // si ya estaba, toggle off
+    if (current.has(optionKey)) {
+      current.delete(optionKey);
+      daySel[time] = Array.from(current);
+      next[dayKey] = daySel;
+      return next;
+    }
+
+    // ✅ límite por horario
+    if (current.size >= MAX_PER_SLOT) {
+      // no cambia estado, solo avisa
+      flashLimit(`Máximo ${MAX_PER_SLOT} artistas por horario`);
+      return prev; // importante: no mutar
+    }
+
+    // agregar
+    current.add(optionKey);
+    daySel[time] = Array.from(current);
+    next[dayKey] = daySel;
+    return next;
+  });
+}
   function clearDay() {
     setAllSelection((prev) => {
       const next = { ...prev };
@@ -528,27 +556,27 @@ function buildRowsForDay(dayKey: DayKey): PdfRow[] {
 async function downloadPDFItinerary() {
   const PDF_BG = "#193E85";
 
-function paintPageBackground() {
-  const { r, g, b } = hexToRgb(PDF_BG);
-  doc.setFillColor(r, g, b);
-  doc.rect(0, 0, PAGE_W, PAGE_H, "F"); // llena toda la hoja
-}
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
 
-const doc = new jsPDF({ unit: "pt", format: "a4" });
+  // ===== REGISTRO DE FUENTES =====
+  doc.addFileToVFS("CosquinDisplay.ttf", COSQUIN_FONT);
+  doc.addFont("CosquinDisplay.ttf", "Cosquin", "normal");
 
-// ===== REGISTRO DE FUENTES =====
-doc.addFileToVFS("CosquinDisplay.ttf", COSQUIN_FONT);
-doc.addFont("CosquinDisplay.ttf", "Cosquin", "normal");
+  doc.addFileToVFS("Circular.otf", CIRCULAR_FONT);
+  doc.addFont("Circular.otf", "Circular", "normal");
+  doc.addFont("Circular.otf", "Circular", "bold");
 
-doc.addFileToVFS("Circular.otf", CIRCULAR_FONT);
-doc.addFont("Circular.otf", "Circular", "normal");
-doc.addFont("Circular.otf", "Circular", "bold");
-
-doc.addFileToVFS("Meloriac.ttf", MELORIAC_FONT);
-doc.addFont("Meloriac.ttf", "Meloriac", "normal");
+  doc.addFileToVFS("Meloriac.ttf", MELORIAC_FONT);
+  doc.addFont("Meloriac.ttf", "Meloriac", "normal");
 
   const PAGE_W = doc.internal.pageSize.getWidth();
   const PAGE_H = doc.internal.pageSize.getHeight();
+
+  function paintPageBackground() {
+    const { r, g, b } = hexToRgb(PDF_BG);
+    doc.setFillColor(r, g, b);
+    doc.rect(0, 0, PAGE_W, PAGE_H, "F"); // llena toda la hoja
+  }
 
   paintPageBackground();
 
@@ -568,58 +596,26 @@ doc.addFont("Meloriac.ttf", "Meloriac", "normal");
     logoDataUrl = "";
   }
 
+  // ✅ helper: ratio real para que NO se aplaste
+  async function getImageRatio(dataUrl: string): Promise<number> {
+    return await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img.width / img.height || 1);
+      img.onerror = () => resolve(1);
+      img.src = dataUrl;
+    });
+  }
+
+  const logoRatio = logoDataUrl ? await getImageRatio(logoDataUrl) : 1;
+
   const daySections: { title: string; rows: PdfRow[] }[] = [
     { title: "DÍA 1 — 14 DE FEBRERO", rows: buildRowsForDay(1) },
-    { title: "DÍA 2 — 15 DE FEBRERO", rows: buildRowsForDay(2) }, // 👈 es 15 (tu data day2)
+    { title: "DÍA 2 — 15 DE FEBRERO", rows: buildRowsForDay(2) },
   ];
 
   let y = M;
 
-function drawHeader() {
-  // título
-  doc.setFont("Meloriac", "normal");
-  doc.setFontSize(18);
-  doc.setTextColor(255, 255, 255);
-  doc.text("ITINERARIO COSQUÍN", M, y + 22);
-
-  // logo
-  if (logoDataUrl) {
-    const logoW = 120;
-    const logoH = 24;
-    doc.addImage(logoDataUrl, "PNG", PAGE_W - M - logoW, y, logoW, logoH);
-  }
-
-  y += HEADER_H;
-
-  // línea sutil blanca
-  doc.setDrawColor(255, 255, 255);
-  doc.setLineWidth(0.6);
-  doc.setGState?.(new (doc as any).GState({ opacity: 0.25 }));
-  doc.line(M, y, PAGE_W - M, y);
-  doc.setGState?.(new (doc as any).GState({ opacity: 1 }));
-
-  y += 14;
-}
-
-function drawDayTitle(text: string) {
-  ensureSpace(52);
-
-  doc.setFont("Meloriac", "normal");
-  doc.setFontSize(14);
-  doc.setTextColor(255, 255, 255);
-  doc.text(text, M, y + 8);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(255, 255, 255);
-  // subtítulo con opacidad (si tu jsPDF soporta GState)
-  doc.setGState?.(new (doc as any).GState({ opacity: 0.75 }));
-  doc.setGState?.(new (doc as any).GState({ opacity: 1 }));
-
-  y += 40;
-}
-
-function newPage() {
+  function newPage() {
     doc.addPage();
     paintPageBackground();
     y = M;
@@ -630,101 +626,147 @@ function newPage() {
     if (y + needed > PAGE_H - M) newPage();
   }
 
-function getStageAccent(stage: string) {
-  // color acento del borde (por stage)
-  const base = stage ? (STAGE_PDF[stage]?.border ?? "#DD5227") : "#FFFFFF";
-  return hexToRgb(base);
-}
+  function drawHeader() {
+    // título
+    doc.setFont("Meloriac", "normal");
+    doc.setFontSize(18);
+    doc.setTextColor(255, 255, 255);
+    doc.text("ITINERARIO COSQUÍN ROCK 2026", M, y + 22);
 
-function drawRowCard(row: PdfRow) {
-  const GAP = 10;
+    // ✅ logo con H fija y W auto (ratio)
+    if (logoDataUrl) {
+      const logoH = 20; // ~h-7 en pt (7mm aprox)
+      const logoW = logoH * logoRatio;
 
-  const accent = getStageAccent(row.stage);
+      doc.addImage(
+        logoDataUrl,
+        "PNG",
+        PAGE_W - M - logoW,
+        y + 2, // micro ajuste óptico
+        logoW,
+        logoH
+      );
+    }
 
-  // Card UI (oscuro translúcido)
-  const cardH = 62;
-  ensureSpace(cardH + GAP);
+    y += HEADER_H;
 
-  // mismo azul del fondo pero más oscuro (card)
-const cardBg = hexToRgb("#193E85");
-doc.setFillColor(cardBg.r, cardBg.g, cardBg.b);
+    // línea sutil blanca
+    doc.setDrawColor(255, 255, 255);
+    doc.setLineWidth(0.6);
+    doc.setGState?.(new (doc as any).GState({ opacity: 0.25 }));
+    doc.line(M, y, PAGE_W - M, y);
+    doc.setGState?.(new (doc as any).GState({ opacity: 1 }));
 
-  // borde general blanco 15%
-  const border = withAlphaOnWhite({ r: 255, g: 255, b: 255 }, 0.18);
-  doc.setDrawColor(border.r, border.g, border.b);
-  doc.setLineWidth(1);
-  doc.roundedRect(M, y, cardW, cardH, 14, 14, "FD");
+    y += 14;
+  }
 
-  // borde acento (izq) del color del escenario
-  doc.setDrawColor(accent.r, accent.g, accent.b);
-  doc.setLineWidth(3);
-  doc.line(M + 8, y + 10, M + 8, y + cardH - 10);
+  function drawDayTitle(text: string) {
+    ensureSpace(70); // un poquito más para que respire
 
-  // Layout
-  const leftX = M + 22;
-  const rightX = M + cardW - 16;
+    doc.setFont("Meloriac", "normal");
+    doc.setFontSize(14);
+    doc.setTextColor(255, 255, 255);
+    doc.text(text, M, y + 8);
 
-  // ARTISTA (izq, grande)
-  doc.setFont("Meloriac", "normal");
-  doc.setFontSize(14);
-  doc.setTextColor(255, 255, 255);
+    // (si querés subtítulo, acá)
+    // doc.setFont("Circular", "normal");
+    // doc.setFontSize(10);
+    // doc.setGState?.(new (doc as any).GState({ opacity: 0.75 }));
+    // doc.text("Artista — Escenario — Hora", M, y + 26);
+    // doc.setGState?.(new (doc as any).GState({ opacity: 1 }));
 
-  const artistMaxW = cardW - 22 - 90; // deja espacio para la hora a la derecha
-  const artistText = row.artist.toUpperCase();
-  const artistLines = doc.splitTextToSize(artistText, artistMaxW);
+    y += 40;
+  }
 
-  // si se va a 2 líneas, bajamos un toque
-  let artistY = y + 26;
-  if (artistLines.length > 1) artistY = y + 20;
+  function getStageAccent(stage: string) {
+    const base = stage ? (STAGE_PDF[stage]?.border ?? "#DD5227") : "#FFFFFF";
+    return hexToRgb(base);
+  }
 
-  doc.text(artistLines.slice(0, 2), leftX, artistY);
+  function drawRowCard(row: PdfRow) {
+    const accent = getStageAccent(row.stage);
 
-  // ESCENARIO (abajo, izq)
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(255, 255, 255);
-  // “opacidad” simulada: gris clarito
-  doc.setTextColor(230, 235, 245);
+    const cardH = 62;
+    ensureSpace(cardH + GAP);
 
-  const stageText = row.stage ? row.stage : "Libre / descanso";
-  doc.text(stageText, leftX, y + cardH - 16);
+    // card bg
+    const cardBg = hexToRgb("#0c234e");
+    doc.setFillColor(cardBg.r, cardBg.g, cardBg.b);
 
-  // HORA (derecha, “circular” look)
-  // pill / badge
-  const pillW = 74;
-  const pillH = 30;
-  const pillX = rightX - pillW;
-  const pillY = y + (cardH - pillH) / 2;
+    // borde general
+    const border = withAlphaOnWhite({ r: 255, g: 255, b: 255 }, 0.18);
+    doc.setDrawColor(border.r, border.g, border.b);
+    doc.setLineWidth(1);
+    doc.roundedRect(M, y, cardW, cardH, 14, 14, "FD");
 
-  // fondo pill = color del escenario
-doc.setFillColor(accent.r, accent.g, accent.b);
+    // acento izq
+    doc.setDrawColor(accent.r, accent.g, accent.b);
+    doc.setLineWidth(3);
+    doc.line(M + 8, y + 10, M + 8, y + cardH - 10);
 
-// borde pill un poco más oscuro (simula contraste)
-const pillBorder = withAlphaOnWhite(accent, 0.85);
-doc.setDrawColor(pillBorder.r, pillBorder.g, pillBorder.b);
-doc.setLineWidth(1);
-doc.roundedRect(pillX, pillY, pillW, pillH, 16, 16, "FD");
+    const leftX = M + 22;
+    const rightX = M + cardW - 16;
 
-  // texto hora (bold)
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.setTextColor(255, 255, 255);
-  doc.text(row.time, pillX + pillW / 2, pillY + 20, { align: "center" });
+    // ARTISTA
+    doc.setFont("Meloriac", "normal");
+    doc.setFontSize(14);
+    doc.setTextColor(255, 255, 255);
 
-  y += cardH + GAP;
-}
+    const artistMaxW = cardW - 22 - 90;
+    const artistText = row.artist.toUpperCase();
+    const artistLines = doc.splitTextToSize(artistText, artistMaxW);
+
+    let artistY = y + 26;
+    if (artistLines.length > 1) artistY = y + 20;
+    doc.text(artistLines.slice(0, 2), leftX, artistY);
+
+    // ESCENARIO
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(230, 235, 245);
+
+    const stageText = row.stage ? row.stage : "Libre / descanso";
+    doc.text(stageText, leftX, y + cardH - 16);
+
+    // pill hora
+    const pillW = 74;
+    const pillH = 30;
+    const pillX = rightX - pillW;
+    const pillY = y + (cardH - pillH) / 2;
+
+    doc.setFillColor(accent.r, accent.g, accent.b);
+    const pillBorder = withAlphaOnWhite(accent, 0.85);
+    doc.setDrawColor(pillBorder.r, pillBorder.g, pillBorder.b);
+    doc.setLineWidth(1);
+    doc.roundedRect(pillX, pillY, pillW, pillH, 16, 16, "FD");
+
+    doc.setFont("Meloriac", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(255, 255, 255);
+    doc.text(row.time, pillX + pillW / 2, pillY + 20, { align: "center" });
+
+    y += cardH + GAP;
+  }
 
   // START
   drawHeader();
 
-  for (const sec of daySections) {
+  for (let i = 0; i < daySections.length; i++) {
+    const sec = daySections[i];
+
+    // ✅ antes de arrancar el día 2: una línea en blanco / espacio extra
+    if (i === 1) {
+      ensureSpace(24);
+      y += 24; // “nueva línea en blanco”
+    }
+
     drawDayTitle(sec.title);
 
     if (sec.rows.length === 0) {
       ensureSpace(40);
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Circular", "normal");
       doc.setFontSize(11);
-      doc.setTextColor(110);
+      doc.setTextColor(255, 255, 255);
       doc.text("No hay selecciones para este día.", M, y + 10);
       y += 28;
       continue;
@@ -735,7 +777,6 @@ doc.roundedRect(pillX, pillY, pillW, pillH, 16, 16, "FD");
 
   doc.save("itinerario-cosquin.pdf");
 }
-
   return (
     <div
       className="relative min-h-dvh overflow-hidden text-white"
@@ -996,6 +1037,13 @@ doc.roundedRect(pillX, pillY, pillW, pillH, 16, 16, "FD");
               />
             </div>
           </div>
+         
+         {limitMsg && (
+  <div className="fixed left-1/2 top-4 z-[999] -translate-x-1/2 rounded-full border border-white/15 bg-black/70 px-5 py-2 text-sm text-white backdrop-blur">
+    {limitMsg}
+  </div>
+)}
+
         </main>
 
         {/* MODAL */}
@@ -1070,7 +1118,7 @@ doc.roundedRect(pillX, pillY, pillW, pillH, 16, 16, "FD");
                             onChange={() => toggleOption(openSlot.time, "FREE")}
                           />
                           <div className="h-7 w-7 rounded-md border border-white/20 bg-white/10 peer-checked:border-[#DD5227] peer-checked:bg-[#DD5227]" />
-                          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[#DD5227] text-white opacity-0 peer-checked:opacity-100">
+                          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[#DD5227] shadow-lg text-white opacity-0 peer-checked:opacity-100">
                             ✓
                           </div>
                         </div>
@@ -1122,7 +1170,7 @@ doc.roundedRect(pillX, pillY, pillW, pillH, 16, 16, "FD");
                                   th.checkOn,
                                 ].join(" ")}
                               />
-                              <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[#DD5227] text-white opacity-0 peer-checked:opacity-100">
+                              <div className="pointer-events-none absolute inset-0 flex items-center justify-center shadow-lg bg-[#DD5227] text-white opacity-0 peer-checked:opacity-100">
                                 ✓
                               </div>
                             </div>
