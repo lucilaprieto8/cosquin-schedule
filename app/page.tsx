@@ -1012,7 +1012,7 @@ async function downloadPDFItinerary() {
 
           {/* POSTERS OCULTOS */}
           <div className="fixed -left-0 top-0 opacity-0 pointer-events-none"
-          style={{transform: "translateY(-2000px" }}>
+          style={{transform: "translateY(-2000px)" }}>
             <div ref={posterRefDay1}>
               <ExportPoster
                 variant="day1"
