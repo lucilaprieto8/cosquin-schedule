@@ -65,3 +65,35 @@ body {
 .cr-s-28 { font-size: 28px; }
 .cr-s-26 { font-size: 26px; }
 .cr-s-22 { font-size: 22px; }
+
+/* Fade + scale in */
+@keyframes welcomeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Fade out */
+@keyframes welcomeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+
+.welcome-enter {
+  animation: welcomeIn 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.welcome-exit {
+  animation: welcomeOut 300ms ease forwards;
+}

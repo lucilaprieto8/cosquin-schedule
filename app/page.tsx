@@ -229,6 +229,18 @@ function slotCardClass(index: number) {
   return `${base} ${variants[index % variants.length]}`;
 }
 
+const WELCOME_MODAL_KEY = "cr_welcome_modal_v1";
+
+function shouldShowWelcome() {
+  if (typeof window === "undefined") return false;
+  return !localStorage.getItem(WELCOME_MODAL_KEY);
+}
+
+function markWelcomeSeen() {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(WELCOME_MODAL_KEY, "1");
+}
+
 export default function Page() {
   const [instagram, setInstagram] = useState<string>("");
 
@@ -237,6 +249,28 @@ export default function Page() {
   function flashLimit(msg: string) {
   setLimitMsg(msg);
   window.setTimeout(() => setLimitMsg(""), 1600);
+}
+
+const [showWelcome, setShowWelcome] = useState(false);
+const [welcomeClosing, setWelcomeClosing] = useState(false);
+
+useEffect(() => {
+  if (!shouldShowWelcome()) return;
+
+  const t = window.setTimeout(() => {
+    setShowWelcome(true);
+  }, 900); // 0.9s / poné 1000 si querés 1s exacto
+
+  return () => window.clearTimeout(t);
+}, []);
+
+function closeWelcome() {
+  setWelcomeClosing(true);
+  window.setTimeout(() => {
+    setShowWelcome(false);
+    setWelcomeClosing(false);
+    markWelcomeSeen();
+  }, 300);
 }
 
   const allShows: Show[] = useMemo(() => {
@@ -1003,7 +1037,7 @@ async function downloadPDFItinerary() {
                 ].join(" ")}
                 style={{ fontFamily: "var(--font-circular)" }}
               >
-                DESCARGAR PDF
+                DESCARGAR PDF CON HORARIOS
               </button>
             </div>
 
@@ -1192,6 +1226,96 @@ async function downloadPDFItinerary() {
           © 2026 Cosquín Rock. Todos los derechos reservados.
         </footer>
       </div>
+
+      {showWelcome && (
+  <div className="fixed inset-0 z-[999]">
+    {/* overlay */}
+    <button
+      aria-label="Cerrar"
+      onClick={closeWelcome}
+      className={[
+        "absolute inset-0 bg-black/55 backdrop-blur-sm",
+        "transition-opacity duration-200 ease-out",
+        welcomeClosing ? "opacity-0" : "opacity-100",
+      ].join(" ")}
+    />
+
+    {/* modal wrapper */}
+    <div className="absolute inset-0 flex items-center justify-center px-5 py-8">
+      <div
+  className={[
+    "relative w-full max-w-[520px] rounded-[28px] border border-white/15 bg-[#0b1530]/80 p-6 shadow-2xl backdrop-blur-md",
+    welcomeClosing ? "welcome-exit" : "welcome-enter",
+  ].join(" ")}
+  style={{
+    boxShadow: "0 24px 80px rgba(0,0,0,0.55)",
+  }}
+>
+        {/* acento Cosquín */}
+        <div className="absolute -left-[2px] top-6 h-[calc(100%-48px)] w-[5px] rounded-full bg-[#DD5227]" />
+
+        {/* close */}
+        <button
+          onClick={closeWelcome}
+          className="absolute right-4 top-4 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs tracking-widest text-white/90 hover:bg-white/15 transition"
+          style={{ fontFamily: "var(--font-circular)" }}
+        >
+          ✕
+        </button>
+
+        {/* title */}
+        <div className="text-center">
+          <div
+            className="text-xs tracking-[0.35em] text-white/75 uppercase"
+            style={{ fontFamily: "var(--font-circular)" }}
+          >
+            BIENVENIDO A
+          </div>
+
+          <div
+            className="mt-2 text-[44px] leading-none tracking-widest text-white uppercase"
+            style={{ fontFamily: "var(--font-meloriac)" }}
+          >
+            ARMÁ TU GRILLA
+          </div>
+
+          <div
+            className="mt-3 text-[18px] tracking-widest text-white/90 uppercase"
+            style={{ fontFamily: "var(--font-circular)" }}
+          >
+            Cosquín Rock 2026
+          </div>
+        </div>
+
+        {/* body */}
+        <div
+          className="mt-5 text-center text-[15px] leading-relaxed text-white/85"
+          style={{ fontFamily: "var(--font-circular)" }}
+        >
+          Elegí tus bandas y artistas favoritos,
+          <br />
+          creá tu grilla personalizada
+          <br />
+          y descargá el PDF con los horarios
+          <br />
+          para guiarte durante el festival.
+        </div>
+
+        {/* CTA */}
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={closeWelcome}
+            className="rounded-full bg-[#DD5227] px-8 py-3 text-[13px] uppercase tracking-widest text-white hover:brightness-110 transition"
+            style={{ fontFamily: "var(--font-circular)" }}
+          >
+            ENTENDIDO
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
