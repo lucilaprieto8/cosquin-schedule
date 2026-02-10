@@ -367,6 +367,11 @@ function sanitizeInstagram(raw: string) {
   const posterRefDay2 = useRef<HTMLDivElement | null>(null);
   const posterRefAll = useRef<HTMLDivElement | null>(null);
 
+  function countUniqueArtists(shows: Show[]) {
+  const set = new Set(shows.map((s) => s.artist.trim().toUpperCase()));
+  return set.size;
+}
+
   function getSelectedShowsForDay(dayKey: DayKey): Show[] {
     const dayKeyStr = String(dayKey);
     const daySel: Selection = allSelection[dayKeyStr] ?? {};
