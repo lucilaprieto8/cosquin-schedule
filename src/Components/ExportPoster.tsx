@@ -197,7 +197,7 @@ export default function ExportPoster({ variant, selectedShows, instagram }: Prop
 >
   <div>Creá tu grilla en</div>
   <div style={{ fontWeight: 700, fontStyle: "italic" }}>
-    www.grillacosquinrock.com
+    www.migrillacosquinrock.com.ar
   </div>
 </div>
     </div>
