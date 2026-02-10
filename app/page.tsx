@@ -253,6 +253,7 @@ export default function Page() {
 
 const [showWelcome, setShowWelcome] = useState(false);
 const [welcomeClosing, setWelcomeClosing] = useState(false);
+const [showExportAlert, setShowExportAlert] = useState(false);
 
 useEffect(() => {
   if (!shouldShowWelcome()) return;
@@ -271,6 +272,11 @@ function closeWelcome() {
     setWelcomeClosing(false);
     markWelcomeSeen();
   }, 300);
+}
+
+function triggerExportAlert() {
+  setShowExportAlert(true);
+  window.setTimeout(() => setShowExportAlert(false), 2500);
 }
 
   const allShows: Show[] = useMemo(() => {
@@ -300,6 +306,7 @@ function sanitizeInstagram(raw: string) {
     .slice(0, 30);
 }
 
+  
   const isInstagramValid = instagram.trim().length >= 4;
   const shareDisabled = !isInstagramValid;
 
@@ -815,6 +822,56 @@ async function downloadPDFItinerary() {
 
   doc.save("itinerario-cosquin.pdf");
 }
+
+function countSelectedShowsForDay(dayKey: DayKey) {
+  const daySel: Selection = allSelection[String(dayKey)] ?? {};
+  const showsForDay = allShows.filter((s) => s.day === dayKey);
+  const daySlots = groupByHour(showsForDay);
+
+  let count = 0;
+
+  for (const slot of daySlots) {
+    const keys = daySel[slot.time] ?? [];
+    if (keys.length === 0) continue;
+    if (keys.includes("FREE")) continue;
+
+    for (const s of slot.shows) {
+      if (keys.includes(showKey(s))) count++;
+    }
+  }
+
+  return count;
+}
+
+const selectedCountDay1 = useMemo(() => countSelectedShowsForDay(1), [allSelection, allShows]);
+const selectedCountDay2 = useMemo(() => countSelectedShowsForDay(2), [allSelection, allShows]);
+
+const hasAtLeastOne = selectedCountDay1 + selectedCountDay2 > 0;
+
+function handleShareDay1() {
+  if (selectedCountDay1 === 0) {
+    triggerExportAlert();
+    return;
+  }
+  shareDay1();
+}
+
+function handleShareDay2() {
+  if (selectedCountDay2 === 0) {
+    triggerExportAlert();
+    return;
+  }
+  shareDay2();
+}
+
+function handleDownloadPDF() {
+  if (!hasAtLeastOne) {
+    triggerExportAlert();
+    return;
+  }
+  downloadPDFItinerary();
+}
+
   return (
     <div
       className="relative min-h-dvh overflow-hidden text-white"
@@ -993,10 +1050,19 @@ async function downloadPDFItinerary() {
   )}
 </div>
 
+{showExportAlert && (
+  <div
+    className="mb-3 text-center text-xs text-[#FF4F4F] py-3"
+    style={{ fontFamily: "var(--font-circular)" }}
+    >
+    Para compartir, seleccioná al menos un artista.
+  </div>
+)}
+
             {/* SHARE BUTTONS */}
             <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-6 md:flex-row md:justify-center md:gap-6">
               <button
-                onClick={shareDay1}
+                onClick={handleShareDay1}
                 disabled={shareDisabled}
                 className={[
                   "px-6 md:px-10 py-3 text-[14px] md:text-[16px] uppercase tracking-widest transition",
@@ -1012,7 +1078,7 @@ async function downloadPDFItinerary() {
               </button>
 
               <button
-                onClick={shareDay2}
+                onClick={handleShareDay2}
                 disabled={shareDisabled}
                 className={[
                   "px-6 md:px-10 py-3 text-[14px] md:text-[16px] uppercase tracking-widest transition",
@@ -1031,7 +1097,7 @@ async function downloadPDFItinerary() {
             {/* PDF */}
             <div className="mt-3 flex justify-center">
               <button
-                onClick={downloadPDFItinerary}
+                onClick={handleDownloadPDF}
                 className={[
                   "px-6 md:px-10",
                   "py-3",
@@ -1081,7 +1147,6 @@ async function downloadPDFItinerary() {
     {limitMsg}
   </div>
 )}
-
         </main>
 
         {/* MODAL */}
@@ -1124,10 +1189,10 @@ async function downloadPDFItinerary() {
 
                     <button
                       onClick={() => setOpenTime(null)}
-                      className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-xs tracking-wider text-white hover:bg-white/20 transition"
+                      className="rounded-full border border-white/20 bg-green-500/30 px-5 py-2 text-xs tracking-wider text-white hover:bg-green-500/80 transition"
                       style={{ fontFamily: "var(--font-circular)" }}
                     >
-                      CERRAR
+                      ACEPTAR
                     </button>
                   </div>
 
