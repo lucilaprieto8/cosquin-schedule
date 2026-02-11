@@ -44,7 +44,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${cosquinFont.variable} ${circular.variable} ${meloriac.variable} ${geistSans.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
