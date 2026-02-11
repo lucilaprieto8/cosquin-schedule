@@ -823,6 +823,18 @@ async function downloadPDFItinerary() {
   doc.save("itinerario-cosquin.pdf");
 }
 
+async function saveGrilla() {
+  await fetch("/api/grilla", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      instagram,
+      day1: selectedShowsDay1,
+      day2: selectedShowsDay2,
+    }),
+  });
+}
+
 function countSelectedShowsForDay(dayKey: DayKey) {
   const daySel: Selection = allSelection[String(dayKey)] ?? {};
   const showsForDay = allShows.filter((s) => s.day === dayKey);
@@ -848,28 +860,22 @@ const selectedCountDay2 = useMemo(() => countSelectedShowsForDay(2), [allSelecti
 
 const hasAtLeastOne = selectedCountDay1 + selectedCountDay2 > 0;
 
-function handleShareDay1() {
-  if (selectedCountDay1 === 0) {
-    triggerExportAlert();
-    return;
-  }
-  shareDay1();
+async function handleShareDay1() {
+  if (selectedCountDay1 === 0) return triggerExportAlert();
+  await saveGrilla();
+  await shareDay1();
 }
 
-function handleShareDay2() {
-  if (selectedCountDay2 === 0) {
-    triggerExportAlert();
-    return;
-  }
-  shareDay2();
+async function handleShareDay2() {
+  if (selectedCountDay2 === 0) return triggerExportAlert();
+  await saveGrilla();
+  await shareDay2();
 }
 
-function handleDownloadPDF() {
-  if (!hasAtLeastOne) {
-    triggerExportAlert();
-    return;
-  }
-  downloadPDFItinerary();
+async function handleDownloadPDF() {
+  if (!hasAtLeastOne) return triggerExportAlert();
+  await saveGrilla();
+  await downloadPDFItinerary();
 }
 
   return (
