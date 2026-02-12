@@ -860,21 +860,55 @@ const selectedCountDay2 = useMemo(() => countSelectedShowsForDay(2), [allSelecti
 
 const hasAtLeastOne = selectedCountDay1 + selectedCountDay2 > 0;
 
+function uniqueArtistsFromShows(shows: { artist: string }[]) {
+  const seen = new Set<string>();
+  const out: string[] = [];
+
+  for (const s of shows) {
+    const clean = (s.artist ?? "").trim();
+    if (!clean) continue;
+
+    const key = clean.toUpperCase();
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    out.push(clean);
+  }
+
+  return out;
+}
+
+async function track(action: "share_day1" | "share_day2" | "pdf") {
+  const day1Artists = uniqueArtistsFromShows(selectedShowsDay1);
+  const day2Artists = uniqueArtistsFromShows(selectedShowsDay2);
+
+  await fetch("/api/track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ig: instagram,
+      action,
+      day1: day1Artists,
+      day2: day2Artists,
+    }),
+  });
+}
+
 async function handleShareDay1() {
-  if (selectedCountDay1 === 0) return triggerExportAlert();
-  await saveGrilla();
+  if (selectedCountDay1 === 0) { triggerExportAlert(); return; }
+  await track("share_day1");
   await shareDay1();
 }
 
 async function handleShareDay2() {
-  if (selectedCountDay2 === 0) return triggerExportAlert();
-  await saveGrilla();
+  if (selectedCountDay2 === 0) { triggerExportAlert(); return; }
+  await track("share_day2");
   await shareDay2();
 }
 
 async function handleDownloadPDF() {
-  if (!hasAtLeastOne) return triggerExportAlert();
-  await saveGrilla();
+  if (!hasAtLeastOne) { triggerExportAlert(); return; }
+  await track("pdf");
   await downloadPDFItinerary();
 }
 
